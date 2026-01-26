@@ -3,6 +3,7 @@
 
 import spidev
 import gpiod
+from gpiod.line import Direction, Value
 import time
 from PIL import Image, ImageDraw, ImageFont
 
@@ -21,18 +22,29 @@ class EPD:
         self.CS_PIN = 8    # Chip Select (обычно управляется SPI)
         self.BUSY_PIN = 24 # Busy
         
-        # Инициализация gpiod
-        self.chip = gpiod.Chip('gpiochip0')  # Может быть gpiochip1, проверьте через gpioinfo
+        # Инициализация gpiod 2.x
+        self.chip = gpiod.Chip('/dev/gpiochip0')  # Может быть gpiochip1, проверьте через gpioinfo
         
-        # Настройка линий GPIO
-        self.rst_line = self.chip.get_line(self.RST_PIN)
-        self.dc_line = self.chip.get_line(self.DC_PIN)
-        self.busy_line = self.chip.get_line(self.BUSY_PIN)
+        # Настройка линий GPIO (новый API gpiod 2.x)
+        line_settings_output = gpiod.LineSettings(
+            direction=Direction.OUTPUT,
+            output_value=Value.INACTIVE
+        )
+        
+        line_settings_input = gpiod.LineSettings(
+            direction=Direction.INPUT
+        )
         
         # Конфигурация пинов
-        self.rst_line.request(consumer="eink", type=gpiod.LINE_REQ_DIR_OUT)
-        self.dc_line.request(consumer="eink", type=gpiod.LINE_REQ_DIR_OUT)
-        self.busy_line.request(consumer="eink", type=gpiod.LINE_REQ_DIR_IN)
+        line_config = gpiod.LineConfig()
+        line_config.add_line_settings({self.RST_PIN, self.DC_PIN}, line_settings_output)
+        line_config.add_line_settings({self.BUSY_PIN}, line_settings_input)
+        
+        # Запрос линий
+        self.request = self.chip.request_lines(
+            consumer="eink",
+            config=line_config
+        )
         
         # Инициализация SPI
         self.spi = spidev.SpiDev()
@@ -40,31 +52,32 @@ class EPD:
         self.spi.max_speed_hz = 4000000
         self.spi.mode = 0
         
-    def digital_write(self, line, value):
+    def digital_write(self, pin, value):
         """Запись в GPIO"""
-        line.set_value(value)
+        gpio_value = Value.ACTIVE if value else Value.INACTIVE
+        self.request.set_value(pin, gpio_value)
         
-    def digital_read(self, line):
+    def digital_read(self, pin):
         """Чтение из GPIO"""
-        return line.get_value()
+        return self.request.get_value(pin) == Value.ACTIVE
         
     def reset(self):
         """Аппаратный сброс дисплея"""
-        self.digital_write(self.rst_line, 1)
+        self.digital_write(self.RST_PIN, 1)
         time.sleep(0.2)
-        self.digital_write(self.rst_line, 0)
+        self.digital_write(self.RST_PIN, 0)
         time.sleep(0.01)
-        self.digital_write(self.rst_line, 1)
+        self.digital_write(self.RST_PIN, 1)
         time.sleep(0.2)
         
     def send_command(self, command):
         """Отправка команды"""
-        self.digital_write(self.dc_line, 0)  # Command mode
+        self.digital_write(self.DC_PIN, 0)  # Command mode
         self.spi.writebytes([command])
         
     def send_data(self, data):
         """Отправка данных"""
-        self.digital_write(self.dc_line, 1)  # Data mode
+        self.digital_write(self.DC_PIN, 1)  # Data mode
         if isinstance(data, int):
             self.spi.writebytes([data])
         else:
@@ -73,7 +86,7 @@ class EPD:
     def wait_until_idle(self):
         """Ожидание готовности дисплея"""
         print("Ожидание готовности дисплея...")
-        while self.digital_read(self.busy_line) == 1:
+        while self.digital_read(self.BUSY_PIN) == 1:
             time.sleep(0.1)
         print("Дисплей готов")
         
@@ -159,9 +172,7 @@ class EPD:
     def cleanup(self):
         """Освобождение ресурсов"""
         self.spi.close()
-        self.rst_line.release()
-        self.dc_line.release()
-        self.busy_line.release()
+        self.request.release()
         self.chip.close()
 
 
