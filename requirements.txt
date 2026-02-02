@@ -1,3 +1,19 @@
-adafruit-circuitpython-pn532
-inky
+# Core dependencies
+requests>=2.31.0
+python-dotenv>=1.0.0
 
+# NFC Reader (PN532)
+adafruit-circuitpython-pn532>=2.3.0
+pyserial>=3.5
+
+# Display (Waveshare E-ink)
+# Note: Install waveshare-epd library from Waveshare's repository
+# pip install waveshare-epd
+# Or download from: https://github.com/waveshare/e-Paper
+Pillow>=10.0.0
+
+# Raspberry Pi GPIO (if needed for button)
+# RPi.GPIO>=0.7.1  # Uncomment if using physical button
+
+# Optional: Better logging
+# python-json-logger>=2.0.7
