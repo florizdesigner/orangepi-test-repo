@@ -65,6 +65,7 @@ class PN532_UART:
     def read_passive_target(self):
         """Read passive target (ISO14443A)"""
         response = self.send_command([0x4A, 0x01, 0x00])
+        print("Response from read_passive_target: " + response)
         
         if len(response) > 20 and response[0:6] == b'\x00\x00\xFF':
             # Extract UID
@@ -157,6 +158,7 @@ def main():
         try:
             # Try to read tag
             uid = nfc.read_passive_target()
+            
             
             if uid and uid != last_uid:
                 print(f"\n✓ Tag detected: {uid}")
