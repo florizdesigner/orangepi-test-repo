@@ -7,18 +7,18 @@ from PIL import Image, ImageDraw, ImageFont
 import time
 import epaper
 
-# ===== Настройки =====
-UART_PORT = '/dev/serial0'  # UART порт для PN532
+# ===== Settings =====
+UART_PORT = '/dev/serial0'  # UART port for PN532
 BAUDRATE = 115200
 
-# Словарь меток и связанной с ними информации
+# Dictionary of tags and associated information
 NFC_DATABASE = {
-    '04A1B2C3D4E5F6': 'Ключ от офиса\nДоступ: Администратор',
-    '04B2C3D4E5F6A1': 'Пропуск сотрудника\nИван Иванов',
-    '04C3D4E5F6A1B2': 'Карта доступа\nСклад #3',
+    '04A1B2C3D4E5F6': 'Office Key\nAccess: Administrator',
+    '04B2C3D4E5F6A1': 'Employee Pass\nJohn Smith',
+    '04C3D4E5F6A1B2': 'Access Card\nWarehouse #3',
 }
 
-# ===== Класс для работы с PN532 =====
+# ===== PN532 Class =====
 class PN532_UART:
     def __init__(self, port, baudrate=115200):
         self.serial = serial.Serial(port, baudrate, timeout=1)
@@ -27,20 +27,20 @@ class PN532_UART:
         self.SAM_configuration()
     
     def wake_up(self):
-        """Пробуждение модуля"""
+        """Wake up the module"""
         self.serial.write(b'\x55\x55\x00\x00\x00')
         time.sleep(0.1)
         self.serial.reset_input_buffer()
     
     def send_command(self, command):
-        """Отправка команды в PN532"""
+        """Send command to PN532"""
         frame = self._build_frame(command)
         self.serial.write(frame)
         time.sleep(0.1)
         return self._read_response()
     
     def _build_frame(self, data):
-        """Построение фрейма команды"""
+        """Build command frame"""
         length = len(data) + 1
         lcs = (~length + 1) & 0xFF
         dcs = (~sum(data) + 1) & 0xFF
@@ -54,35 +54,35 @@ class PN532_UART:
         return bytes(frame)
     
     def _read_response(self):
-        """Чтение ответа от PN532"""
+        """Read response from PN532"""
         response = self.serial.read(64)
         return response
     
     def SAM_configuration(self):
-        """Настройка SAM"""
+        """Configure SAM"""
         self.send_command([0x14, 0x01, 0x00, 0x00])
     
     def read_passive_target(self):
-        """Чтение пассивной метки (ISO14443A)"""
+        """Read passive target (ISO14443A)"""
         response = self.send_command([0x4A, 0x01, 0x00])
         
         if len(response) > 20 and response[0:6] == b'\x00\x00\xFF':
-            # Извлечение UID
+            # Extract UID
             uid_length = response[12]
             uid = response[13:13 + uid_length]
             return binascii.hexlify(uid).decode('utf-8').upper()
         
         return None
 
-# ===== Класс для работы с e-ink дисплеем =====
-# Замените на библиотеку вашего конкретного дисплея
-# Например, для Waveshare используйте их библиотеки
+# ===== E-ink Display Class =====
+# Replace with your specific display library
+# For example, for Waveshare use their libraries
 
 class EinkDisplay:
     def __init__(self):
         """
-        Инициализация дисплея
-        Для конкретной модели используйте соответствующую библиотеку:
+        Initialize display
+        For specific model use corresponding library:
         - Waveshare: from waveshare_epd import epd2in13_V2
         - Pimoroni: import inky
         """
@@ -95,13 +95,13 @@ class EinkDisplay:
         self.epd.init()
         self.epd.Clear(0xFF)
     
-    def display_text(self, text, title="NFC Сканер"):
-        """Отображение текста на дисплее"""
-        # Создание изображения
+    def display_text(self, text, title="NFC Scanner"):
+        """Display text on screen"""
+        # Create image
         image = Image.new('1', (self.width, self.height), 255)
         draw = ImageDraw.Draw(image)
         
-        # Загрузка шрифтов (можно использовать системные)
+        # Load fonts (can use system fonts)
         try:
             font_title = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', 16)
             font_text = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 14)
@@ -109,87 +109,87 @@ class EinkDisplay:
             font_title = ImageFont.load_default()
             font_text = ImageFont.load_default()
         
-        # Отрисовка заголовка
+        # Draw title
         draw.text((10, 10), title, font=font_title, fill=0)
         draw.line((10, 35, self.width - 10, 35), fill=0, width=2)
         
-        # Отрисовка основного текста
+        # Draw main text
         y_position = 50
         for line in text.split('\n'):
             draw.text((10, y_position), line, font=font_text, fill=0)
             y_position += 20
         
-        # Вывод на дисплей
-        # Для Waveshare:
+        # Display on screen
+        # For Waveshare:
         # self.epd.display(self.epd.getbuffer(image))
         
-        # Для тестирования сохраняем как картинку
+        # For testing, save as image
         image.save('/tmp/nfc_display.png')
-        print(f"Изображение сохранено в /tmp/nfc_display.png")
-        print(f"Заголовок: {title}")
-        print(f"Текст:\n{text}")
+        print(f"Image saved to /tmp/nfc_display.png")
+        print(f"Title: {title}")
+        print(f"Text:\n{text}")
     
     def clear(self):
-        """Очистка дисплея"""
+        """Clear display"""
         # self.epd.Clear(0xFF)
         pass
 
-# ===== Основная программа =====
+# ===== Main Program =====
 def main():
-    print("Инициализация NFC-ридера и дисплея...")
+    print("Initializing NFC reader and display...")
     
-    # Инициализация устройств
+    # Initialize devices
     try:
         nfc = PN532_UART(UART_PORT, BAUDRATE)
         display = EinkDisplay()
-        print("✓ Устройства инициализированы")
+        print("✓ Devices initialized successfully")
     except Exception as e:
-        print(f"✗ Ошибка инициализации: {e}")
+        print(f"✗ Initialization error: {e}")
         return
     
-    # Отображение приветственного сообщения
-    display.display_text("Приложите\nNFC-метку", "Готов к работе")
+    # Display welcome message
+    display.display_text("Please present\nNFC tag", "Ready")
     
-    print("\nОжидание NFC-метки...")
+    print("\nWaiting for NFC tag...")
     last_uid = None
     
     while True:
         try:
-            # Попытка чтения метки
+            # Try to read tag
             uid = nfc.read_passive_target()
             
             if uid and uid != last_uid:
-                print(f"\n✓ Обнаружена метка: {uid}")
+                print(f"\n✓ Tag detected: {uid}")
                 last_uid = uid
                 
-                # Поиск информации о метке
+                # Search for tag information
                 if uid in NFC_DATABASE:
                     info = NFC_DATABASE[uid]
-                    print(f"  Информация: {info.replace(chr(10), ' | ')}")
-                    display.display_text(info, f"Метка: {uid[:8]}...")
+                    print(f"  Information: {info.replace(chr(10), ' | ')}")
+                    display.display_text(info, f"Tag: {uid[:8]}...")
                 else:
-                    info = f"Неизвестная метка\nUID: {uid}"
+                    info = f"Unknown tag\nUID: {uid}"
                     print(f"  {info}")
-                    display.display_text(info, "Не в базе")
+                    display.display_text(info, "Not in database")
                 
-                # Ожидание убирания метки
+                # Wait for tag removal
                 time.sleep(2)
             
             elif not uid and last_uid:
-                # Метка убрана
-                print("Метка убрана")
+                # Tag removed
+                print("Tag removed")
                 last_uid = None
-                display.display_text("Приложите\nNFC-метку", "Готов к работе")
+                display.display_text("Please present\nNFC tag", "Ready")
             
             time.sleep(0.3)
             
         except KeyboardInterrupt:
-            print("\n\nЗавершение работы...")
+            print("\n\nShutting down...")
             display.clear()
             break
         except Exception as e:
-            print(f"Ошибка: {e}")
+            print(f"Error: {e}")
             time.sleep(1)
 
-if __name__ == "__main__":
+if name == "__main__":
     main()
