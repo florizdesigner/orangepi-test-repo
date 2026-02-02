@@ -91,7 +91,7 @@ class EinkDisplay:
         
         # Пример для Waveshare (раскомментируйте и адаптируйте):
 #!/usr/bin/env python3
-        self.epd = epaper.epaper('epd3in7').EPD()
+        self.epd = epaper.epaper('epd3in0g').EPD()
         self.epd.init()
         self.epd.Clear(0xFF)
     
