@@ -5,6 +5,7 @@ import binascii
 import serial
 from PIL import Image, ImageDraw, ImageFont
 import time
+import epaper
 
 # ===== Настройки =====
 UART_PORT = '/dev/serial0'  # UART порт для PN532
@@ -85,13 +86,12 @@ class EinkDisplay:
         - Waveshare: from waveshare_epd import epd2in13_V2
         - Pimoroni: import inky
         """
-        self.width = 250
-        self.height = 122
+        self.width = 400
+        self.height = 168
         
         # Пример для Waveshare (раскомментируйте и адаптируйте):
 #!/usr/bin/env python3
-        from waveshare_epd import epd3in0g
-        self.epd = epd3in0g.EPD()
+        self.epd = epaper.epaper('epd3in7').EPD()
         self.epd.init()
         self.epd.Clear(0xFF)
     
