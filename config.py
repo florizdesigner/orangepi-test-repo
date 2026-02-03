@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Configuration
-API_BASE_URL = "https://api.velowcyclingclub.ru/v3"
+API_BASE_URL = "https://api.velowcyclingclub.ru/api"
 
 # API Authentication (loaded from .env)
 API_USERNAME = os.getenv("API_USERNAME")
@@ -28,12 +28,15 @@ DISPLAY_MODEL = "epd3in7"  # Waveshare 3.7" display (closest to 400x168)
 
 # GPIO Configuration (for button)
 # IMPORTANT: Change this to your actual GPIO pin when you install the button
-BUTTON_GPIO_PIN = 17  # BCM numbering - CHANGE THIS TO YOUR PIN
 BUTTON_BOUNCE_TIME = 300  # milliseconds
+
+# Физические пины
+BUTTON_START_PIN = 6   # Кнопка START (начать сканирование)
+BUTTON_STOP_PIN = 13   # Кнопка STOP (остановить сканирование)
 
 # Application Settings
 MEDIA_DIRECTORY = "./media"  # Directory for images
-LOGO_FILENAME = "velow.png"
+LOGO_FILENAME = "velow.bmp"
 
 # Timing Settings (in seconds)
 MESSAGE_DISPLAY_TIME = 2  # How long to show success/error messages

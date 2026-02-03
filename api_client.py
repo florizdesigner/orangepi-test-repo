@@ -1,6 +1,25 @@
 """
 API Client for Velow Cycling Club Backend
 Handles all HTTP communication with the backend API
+
+Usage:
+    from api_client import VelowAPIClient
+    import config
+    
+    # Initialize client with config credentials
+    client = VelowAPIClient(
+        config.API_BASE_URL,
+        username=config.API_USERNAME,
+        password=config.API_PASSWORD,
+        bearer_token=config.API_TOKEN
+    )
+    
+    # Use the client
+    events = client.get_events()
+    user = client.get_user("123")
+    
+    # Close when done
+    client.close()
 """
 import requests
 import logging
@@ -198,14 +217,17 @@ class VelowAPIClient:
 
 # Example usage
 if __name__ == "__main__":
+    import config
+    
     # Configure logging for testing
     logging.basicConfig(level=logging.DEBUG)
     
-    # Create client with authentication
+    # Create client with authentication from config
     client = VelowAPIClient(
-        "https://api.velowcyclingclub.ru/v3",
-        username="test_user",
-        password="test_password"
+        config.API_BASE_URL,
+        username=config.API_USERNAME,
+        password=config.API_PASSWORD,
+        bearer_token=config.API_TOKEN
     )
     
     # Test get events

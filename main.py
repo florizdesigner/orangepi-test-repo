@@ -68,29 +68,47 @@ class NFCRegistrationApp:
         self.state = AppState.IDLE
         self.active_event_id: Optional[int] = None
         self.running = True
-        self.button_pressed = False
+        self.start_button_pressed = False
+        self.stop_button_pressed = False
         
-        # Setup button if GPIO available
-        self.button_enabled = False
+        # Setup buttons if GPIO available
+        self.buttons_enabled = False
         if GPIO_AVAILABLE:
             try:
-                GPIO.setmode(GPIO.BCM)
-                GPIO.setup(config.BUTTON_GPIO_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+                GPIO.setmode(GPIO.BOARD)
+                
+                # Start button (Physical pin 31)
+                GPIO.setup(config.BUTTON_START_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
                 GPIO.add_event_detect(
-                    config.BUTTON_GPIO_PIN,
+                    config.BUTTON_START_PIN,
                     GPIO.FALLING,
-                    callback=self._button_callback,
+                    callback=self._start_button_callback,
                     bouncetime=config.BUTTON_BOUNCE_TIME
                 )
-                self.button_enabled = True
-                logger.info(f"Button initialized on GPIO {config.BUTTON_GPIO_PIN}")
+                
+                # Stop button (Physical pin 33)
+                GPIO.setup(config.BUTTON_STOP_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+                GPIO.add_event_detect(
+                    config.BUTTON_STOP_PIN,
+                    GPIO.FALLING,
+                    callback=self._stop_button_callback,
+                    bouncetime=config.BUTTON_BOUNCE_TIME
+                )
+                
+                self.buttons_enabled = True
+                logger.info(f"Buttons initialized: Start=GPIO{config.BUTTON_START_PIN} (Pin 31), Stop=GPIO{config.BUTTON_STOP_PIN} (Pin 33)")
             except Exception as e:
-                logger.warning(f"Failed to initialize button: {e}")
+                logger.warning(f"Failed to initialize buttons: {e}")
     
-    def _button_callback(self, channel):
-        """Callback for button press"""
-        logger.info("Button pressed!")
-        self.button_pressed = True
+    def _start_button_callback(self, channel):
+        """Callback for start button press"""
+        logger.info("Start button pressed!")
+        self.start_button_pressed = True
+    
+    def _stop_button_callback(self, channel):
+        """Callback for stop button press"""
+        logger.info("Stop button pressed!")
+        self.stop_button_pressed = True
         
     def initialize(self):
         """Initialize all hardware components"""
@@ -215,23 +233,28 @@ class NFCRegistrationApp:
         
         logger.info("Application started")
         
-        if self.button_enabled:
-            logger.info("Waiting for button press to start scanning...")
+        if self.buttons_enabled:
+            logger.info("Waiting for START button press (GPIO{}, Pin 31) to begin scanning...".format(config.BUTTON_START_PIN))
         else:
-            logger.info("Button not available - auto-starting in 3 seconds...")
+            logger.info("Buttons not available - auto-starting in 3 seconds...")
             time.sleep(3)
             self.start_scanning()
         
         try:
             while self.running:
-                # Handle button press
-                if self.button_pressed:
-                    self.button_pressed = False
+                # Handle start button press
+                if self.start_button_pressed:
+                    self.start_button_pressed = False
                     
                     if self.state == AppState.IDLE:
                         # Start scanning
                         self.start_scanning()
-                    elif self.state == AppState.WAITING_NFC:
+                
+                # Handle stop button press
+                if self.stop_button_pressed:
+                    self.stop_button_pressed = False
+                    
+                    if self.state == AppState.WAITING_NFC:
                         # Stop scanning
                         self.stop_scanning()
                 
@@ -276,7 +299,7 @@ class NFCRegistrationApp:
         self.display.cleanup()
         
         # Cleanup GPIO
-        if GPIO_AVAILABLE and self.button_enabled:
+        if GPIO_AVAILABLE and self.buttons_enabled:
             try:
                 GPIO.cleanup()
                 logger.info("GPIO cleaned up")
