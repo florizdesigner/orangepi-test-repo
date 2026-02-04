@@ -9,8 +9,8 @@ from enum import Enum
 from typing import Optional
 
 from api_client import VelowAPIClient
-from nfc_reader import NFCReader, MockNFCReader
-from display_manager import DisplayManager, MockDisplayManager
+from nfc_reader import NFCReader
+from display_manager import DisplayManager
 import config
 
 try:
