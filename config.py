@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Configuration
-API_BASE_URL = "https://api.velowcyclingclub.ru/api"
+API_BASE_URL = "10.40.0.3:8080/api"
 
 # API Authentication (loaded from .env)
 API_USERNAME = os.getenv("API_USERNAME")
@@ -21,22 +21,24 @@ NFC_UART_PORT = "/dev/serial0"  # or "/dev/ttyAMA0"
 NFC_BAUDRATE = 115200
 
 # Display Configuration
-# Waveshare 3" E-ink display - 400x168 pixels
-DISPLAY_WIDTH = 400
-DISPLAY_HEIGHT = 168
-DISPLAY_MODEL = "epd3in7"  # Waveshare 3.7" display (closest to 400x168)
+# Waveshare 3.7" E-ink display - 400x168 pixels (landscape orientation)
+DISPLAY_WIDTH = 400   # Width in landscape mode
+DISPLAY_HEIGHT = 168  # Height in landscape mode
+DISPLAY_MODEL = "epd3in7"  # Waveshare 3.7" display
 
-# GPIO Configuration (for button)
-# IMPORTANT: Change this to your actual GPIO pin when you install the button
+# GPIO Configuration (BCM numbering)
+# Physical Pin 31 = BCM GPIO 6
+BUTTON_START_PIN = 6  # Physical pin 31 - Start scanning
+# Physical Pin 33 = BCM GPIO 13  
+BUTTON_STOP_PIN = 13  # Physical pin 33 - Stop scanning
 BUTTON_BOUNCE_TIME = 300  # milliseconds
-
-# Физические пины
-BUTTON_START_PIN = 6   # Кнопка START (начать сканирование)
-BUTTON_STOP_PIN = 13   # Кнопка STOP (остановить сканирование)
 
 # Application Settings
 MEDIA_DIRECTORY = "./media"  # Directory for images
-LOGO_FILENAME = "velow.bmp"
+LOGO_FILENAME = "velow.png"
+
+# Welcome screen text (instead of logo image)
+WELCOME_TEXT = "Velow Cycling Club\n\nСистема регистрации"
 
 # Timing Settings (in seconds)
 MESSAGE_DISPLAY_TIME = 2  # How long to show success/error messages
