@@ -11,8 +11,8 @@ import config
 try:
     # Try to import Waveshare library
     # For 400x168 display, typically epd3in7 (3.7 inch)
-    from waveshare_epd import epd3in7
-    EPD = epd3in7.EPD()
+    from waveshare_epd import epd3in0g
+    EPD = epd3in0g.EPD()
 except ImportError:
     EPD = None
     logging.warning("Waveshare EPD library not found, using mock display")
