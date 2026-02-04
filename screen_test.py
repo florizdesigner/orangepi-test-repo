@@ -1,71 +1,77 @@
 #!/usr/bin/env python3
-"""
-Quick E-ink Display Test
-Simple script to quickly test the display with random messages
-"""
+# -*- coding: utf-8 -*-
 
 import time
 import random
-import sys
+from PIL import Image, ImageDraw, ImageFont
+from waveshare_epd import epd3in0g
 
-# Add parent directory to path to import modules
-sys.path.insert(0, '.')
-
-from display_manager import DisplayManager
-import config
-
-# Test messages
-MESSAGES = [
-    "Velow Cycling Club",
-    "Приложите\nNFC-брелок",
-    "Пожалуйста,\nподождите...",
-    "✓ Успех!",
-    "Тест дисплея",
-    "Hello World",
-    "Привет Мир",
-    "1 2 3 4 5",
-    "Test\nDisplay\nWorking",
-    "Работает!",
+# Словарь с предложениями
+sentences = [
+    "Привет, мир!",
+    "E-ink дисплей работает",
+    "Python + Pillow",
+    "Waveshare EPD 3.0",
+    "Быстрое обновление",
+    "Тестовый режим",
+    "Отлично работает!",
+    "Энергоэффективно",
 ]
 
-print("=" * 50)
-print("Quick E-ink Display Test")
-print("=" * 50)
-
-display = DisplayManager(config.DISPLAY_MODEL)
-
-try:
-    # Initialize
-    print("Initializing display...")
-    display.initialize()
-    print("✓ Display ready!\n")
-    
-    print(f"Will show {len(MESSAGES)} different random messages")
-    print("Changing every 3 seconds")
-    print("Press Ctrl+C to stop\n")
-    print("-" * 50)
-    
-    count = 0
-    while True:
-        # Pick random message
-        message = random.choice(MESSAGES)
-        count += 1
+def main():
+    try:
+        print("Инициализация дисплея...")
+        epd = epd3in0g.EPD()
+        epd.init()
+        epd.Clear()
         
-        print(f"\n[{count}] Showing: '{message.replace(chr(10), ' / ')}'")
+        # Параметры дисплея
+        width = 400
+        height = 168
         
-        # Display with fast update
-        display.show_text(message, fast_update=True)
+        # Загружаем шрифт (используем стандартный или укажите путь к .ttf)
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
+        except:
+            font = ImageFont.load_default()
         
-        print("Waiting 3 seconds...")
-        time.sleep(3)
+        print("Начинаем вывод текста...")
+        
+        while True:
+            # Выбираем случайное предложение
+            text = random.choice(sentences)
+            
+            # Создаем изображение с белым фоном
+            image = Image.new('RGB', (width, height), 'white')
+            draw = ImageDraw.Draw(image)
+            
+            # Получаем размеры текста для центрирования
+            bbox = draw.textbbox((0, 0), text, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+            
+            # Вычисляем позицию для центрирования
+            x = (width - text_width) // 2
+            y = (height - text_height) // 2
+            
+            # Рисуем черный текст
+            draw.text((x, y), text, font=font, fill='black')
+            
+            # Отображаем на дисплее (быстрое обновление)
+            epd.display(epd.getbuffer(image))
+            
+            print(f"Отображено: {text}")
+            
+            # Ждем 3 секунды
+            time.sleep(3)
+            
+    except KeyboardInterrupt:
+        print("\nПрограмма остановлена")
+        epd.Clear()
+        epd.sleep()
+        
+    except Exception as e:
+        print(f"Ошибка: {e}")
 
-except KeyboardInterrupt:
-    print(f"\n\n✓ Test stopped. Total messages shown: {count}")
-
-except Exception as e:
-    print(f"\n✗ Error: {e}")
-
-finally:
-    print("\nCleaning up...")
-    display.cleanup()
-    print("Done!\n")
+if name == "__main__":
+    main()
