@@ -5,7 +5,7 @@ Tool for writing user IDs to NFC tags
 """
 import logging
 import sys
-from nfc_reader import NFCReader, MockNFCReader
+from nfc_reader import NFCReader
 import config
 
 logging.basicConfig(
@@ -24,11 +24,7 @@ def program_tag(user_id: str, use_mock: bool = False):
         use_mock: Use mock reader for testing
     """
     # Initialize NFC reader
-    if use_mock:
-        reader = MockNFCReader()
-        logger.info("Using Mock NFC Reader")
-    else:
-        reader = NFCReader(config.NFC_UART_PORT, config.NFC_BAUDRATE)
+    reader = NFCReader(config.NFC_UART_PORT, config.NFC_BAUDRATE)
     
     try:
         reader.initialize()
@@ -58,12 +54,8 @@ def read_tag_info(use_mock: bool = False):
         use_mock: Use mock reader for testing
     """
     # Initialize NFC reader
-    if use_mock:
-        reader = MockNFCReader()
-        logger.info("Using Mock NFC Reader")
-    else:
-        reader = NFCReader(config.NFC_UART_PORT, config.NFC_BAUDRATE)
-    
+    reader = NFCReader(config.NFC_UART_PORT, config.NFC_BAUDRATE)
+
     try:
         reader.initialize()
         reader.start_reading()
@@ -95,69 +87,68 @@ def read_tag_info(use_mock: bool = False):
         reader.cleanup()
 
 
-def main():
-    """Main function"""
-    print("=" * 60)
-    print("NFC Tag Programming Utility")
-    print("=" * 60)
-    print()
+# def main():
+#     """Main function"""
+#     print("=" * 60)
+#     print("NFC Tag Programming Utility")
+#     print("=" * 60)
+#     print()
     
-    if len(sys.argv) < 2:
-        print("Usage:")
-        print("  Program tag:  python3 nfc_program.py write <user_id>")
-        print("  Read tag:     python3 nfc_program.py read")
-        print()
-        print("Examples:")
-        print("  python3 nfc_program.py write USER001")
-        print("  python3 nfc_program.py read")
-        print()
-        sys.exit(1)
+#     if len(sys.argv) < 2:
+#         print("Usage:")
+#         print("  Program tag:  python3 nfc_program.py write <user_id>")
+#         print("  Read tag:     python3 nfc_program.py read")
+#         print()
+#         print("Examples:")
+#         print("  python3 nfc_program.py write USER001")
+#         print("  python3 nfc_program.py read")
+#         print()
+#         sys.exit(1)
     
-    command = sys.argv[1].lower()
-    use_mock = config.USE_MOCK_NFC
+#     command = sys.argv[1].lower()
     
-    if command == "write":
-        if len(sys.argv) < 3:
-            print("Error: User ID required")
-            print("Usage: python3 nfc_program.py write <user_id>")
-            sys.exit(1)
+#     if command == "write":
+#         if len(sys.argv) < 3:
+#             print("Error: User ID required")
+#             print("Usage: python3 nfc_program.py write <user_id>")
+#             sys.exit(1)
         
-        user_id = sys.argv[2]
+#         user_id = sys.argv[2]
         
-        print(f"Programming tag with User ID: {user_id}")
-        print()
+#         print(f"Programming tag with User ID: {user_id}")
+#         print()
         
-        success = program_tag(user_id, use_mock)
+#         success = program_tag(user_id, use_mock)
         
-        if success:
-            print()
-            print("✓ SUCCESS: Tag programmed")
-            sys.exit(0)
-        else:
-            print()
-            print("✗ FAILED: Could not program tag")
-            sys.exit(1)
+#         if success:
+#             print()
+#             print("✓ SUCCESS: Tag programmed")
+#             sys.exit(0)
+#         else:
+#             print()
+#             print("✗ FAILED: Could not program tag")
+#             sys.exit(1)
     
-    elif command == "read":
-        print("Reading tag information...")
-        print()
+#     elif command == "read":
+#         print("Reading tag information...")
+#         print()
         
-        user_id = read_tag_info(use_mock)
+#         user_id = read_tag_info(use_mock)
         
-        if user_id:
-            print()
-            print("✓ SUCCESS: Tag read")
-            sys.exit(0)
-        else:
-            print()
-            print("✗ FAILED: Could not read tag")
-            sys.exit(1)
+#         if user_id:
+#             print()
+#             print("✓ SUCCESS: Tag read")
+#             sys.exit(0)
+#         else:
+#             print()
+#             print("✗ FAILED: Could not read tag")
+#             sys.exit(1)
     
-    else:
-        print(f"Error: Unknown command '{command}'")
-        print("Valid commands: write, read")
-        sys.exit(1)
+#     else:
+#         print(f"Error: Unknown command '{command}'")
+#         print("Valid commands: write, read")
+#         sys.exit(1)
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()

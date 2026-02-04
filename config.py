@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Configuration
-API_BASE_URL = "10.40.0.3:8080/api"
+API_BASE_URL = "10.40.0.3:8080"
 
 # API Authentication (loaded from .env)
 API_USERNAME = os.getenv("API_USERNAME")
@@ -22,8 +22,10 @@ NFC_BAUDRATE = 115200
 
 # Display Configuration
 # Waveshare 3.7" E-ink display - 400x168 pixels (landscape orientation)
-DISPLAY_WIDTH = 400   # Width in landscape mode
-DISPLAY_HEIGHT = 168  # Height in landscape mode
+# DISPLAY_WIDTH = 400   # Width in landscape mode
+# DISPLAY_HEIGHT = 168  # Height in landscape mode
+DISPLAY_HEIGHT = 400
+DISPLAY_WIDTH = 168
 DISPLAY_MODEL = "epd3in0g"  # Waveshare 3.7" display
 
 # GPIO Configuration (BCM numbering)
@@ -35,7 +37,7 @@ BUTTON_BOUNCE_TIME = 300  # milliseconds
 
 # Application Settings
 MEDIA_DIRECTORY = "./media"  # Directory for images
-LOGO_FILENAME = "velow.png"
+LOGO_FILENAME = "velow.bmp"
 
 # Welcome screen text (instead of logo image)
 WELCOME_TEXT = "Velow Cycling Club\n\nСистема регистрации"
@@ -47,7 +49,3 @@ NFC_READ_TIMEOUT = 0.1  # Timeout for NFC tag detection
 # Logging Configuration
 LOG_LEVEL = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-# Development/Testing
-USE_MOCK_NFC = False  # Set to True to use mock NFC reader
-USE_MOCK_DISPLAY = False  # Set to True to use mock display

@@ -51,20 +51,11 @@ class NFCRegistrationApp:
             bearer_token=config.API_TOKEN
         )
         
-        # Initialize NFC reader (mock or real)
-        if config.USE_MOCK_NFC:
-            self.nfc_reader = MockNFCReader()
-            logger.info("Using Mock NFC Reader")
-        else:
-            self.nfc_reader = NFCReader(config.NFC_UART_PORT, config.NFC_BAUDRATE)
+        # Инициализация NFC-ридера и дисплея
+        self.nfc_reader = NFCReader(config.NFC_UART_PORT, config.NFC_BAUDRATE)
+        self.display = DisplayManager(config.DISPLAY_MODEL)
         
-        # Initialize display (mock or real)
-        if config.USE_MOCK_DISPLAY:
-            self.display = MockDisplayManager()
-            logger.info("Using Mock Display")
-        else:
-            self.display = DisplayManager(config.DISPLAY_MODEL)
-        
+
         self.state = AppState.IDLE
         self.active_event_id: Optional[int] = None
         self.running = True
@@ -77,7 +68,6 @@ class NFCRegistrationApp:
             try:
                 GPIO.setmode(GPIO.BOARD)
                 
-                # Start button (Physical pin 31)
                 GPIO.setup(config.BUTTON_START_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
                 GPIO.add_event_detect(
                     config.BUTTON_START_PIN,
@@ -86,7 +76,6 @@ class NFCRegistrationApp:
                     bouncetime=config.BUTTON_BOUNCE_TIME
                 )
                 
-                # Stop button (Physical pin 33)
                 GPIO.setup(config.BUTTON_STOP_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
                 GPIO.add_event_detect(
                     config.BUTTON_STOP_PIN,
@@ -100,6 +89,8 @@ class NFCRegistrationApp:
             except Exception as e:
                 logger.warning(f"Failed to initialize buttons: {e}")
     
+    # TODO: переделать все на одну кнопку с инверсией состояния
+
     def _start_button_callback(self, channel):
         """Callback for start button press"""
         logger.info("Start button pressed!")
@@ -160,7 +151,7 @@ class NFCRegistrationApp:
         """
         logger.info(f"Processing NFC tag for user ID: {user_id}")
         
-        # Show processing screen
+        # Show processing screen (fast update for temporary message)
         self.display.show_text("Пожалуйста, подождите...")
         
         # Check for active event
@@ -226,9 +217,8 @@ class NFCRegistrationApp:
             logger.error("Failed to initialize, exiting")
             return
         
-        # Show welcome screen
-        logo_path = os.path.join(config.MEDIA_DIRECTORY, config.LOGO_FILENAME)
-        self.display.show_image(logo_path)
+        # Show welcome screen with text (instead of logo)
+        self.display.show_text(config.WELCOME_TEXT, fast_update=False)
         self.state = AppState.IDLE
         
         logger.info("Application started")
@@ -289,8 +279,8 @@ class NFCRegistrationApp:
         logger.info("Stopping NFC scanning...")
         self.nfc_reader.stop_reading()
         self.state = AppState.IDLE
-        logo_path = os.path.join(config.MEDIA_DIRECTORY, config.LOGO_FILENAME)
-        self.display.show_image(logo_path)
+        # Show welcome text (full update for better quality)
+        self.display.show_text(config.WELCOME_TEXT, fast_update=False)
     
     def cleanup(self):
         """Clean up resources"""
