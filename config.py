@@ -24,7 +24,7 @@ NFC_BAUDRATE = 115200
 # Waveshare 3.7" E-ink display - 400x168 pixels (landscape orientation)
 DISPLAY_WIDTH = 400   # Width in landscape mode
 DISPLAY_HEIGHT = 168  # Height in landscape mode
-DISPLAY_MODEL = "epd3in7"  # Waveshare 3.7" display
+DISPLAY_MODEL = "epd3in0g"  # Waveshare 3.7" display
 
 # GPIO Configuration (BCM numbering)
 # Physical Pin 31 = BCM GPIO 6
