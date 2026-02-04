@@ -41,26 +41,36 @@ def main():
         first_run = True
         
         while True:
+            # Выбираем случайное предложение
             text = random.choice(sentences)
             
-            # Создаем изображение
+            # Создаем изображение с белым фоном
             image = Image.new('RGB', (width, height), 'white')
             draw = ImageDraw.Draw(image)
             
-            # Центрируем текст
+            # Получаем размеры текста для центрирования
             bbox = draw.textbbox((0, 0), text, font=font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
+            
+            # Вычисляем позицию для центрирования
             x = (width - text_width) // 2
             y = (height - text_height) // 2
             
-            # Рисуем текст
+            # Рисуем черный текст
             draw.text((x, y), text, font=font, fill='black')
             
-            # Быстрое частичное обновление
-            epd.display_Partial(epd.getbuffer(image))
+            # Быстрое обновление (частичное обновление без полной перерисовки)
+            if first_run:
+                epd.display(epd.getbuffer(image))
+                first_run = False
+            else:
+                # Используем display_Base для быстрого обновления
+                epd.display_Base(epd.getbuffer(image))
             
             print(f"Отображено: {text}")
+            
+            # Ждем 3 секунды
             time.sleep(3)
             
     except KeyboardInterrupt:
