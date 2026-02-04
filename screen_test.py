@@ -29,7 +29,7 @@ def main():
         width = 400
         height = 168
         
-        # Загружаем шрифт (используем стандартный или укажите путь к .ttf)
+        # Загружаем шрифт
         try:
             font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24)
         except:
@@ -37,32 +37,30 @@ def main():
         
         print("Начинаем вывод текста...")
         
+        # Первое полное обновление
+        first_run = True
+        
         while True:
-            # Выбираем случайное предложение
             text = random.choice(sentences)
             
-            # Создаем изображение с белым фоном
+            # Создаем изображение
             image = Image.new('RGB', (width, height), 'white')
             draw = ImageDraw.Draw(image)
             
-            # Получаем размеры текста для центрирования
+            # Центрируем текст
             bbox = draw.textbbox((0, 0), text, font=font)
             text_width = bbox[2] - bbox[0]
             text_height = bbox[3] - bbox[1]
-            
-            # Вычисляем позицию для центрирования
             x = (width - text_width) // 2
             y = (height - text_height) // 2
             
-            # Рисуем черный текст
+            # Рисуем текст
             draw.text((x, y), text, font=font, fill='black')
             
-            # Отображаем на дисплее (быстрое обновление)
-            epd.display(epd.getbuffer(image))
+            # Быстрое частичное обновление
+            epd.display_Partial(epd.getbuffer(image))
             
             print(f"Отображено: {text}")
-            
-            # Ждем 3 секунды
             time.sleep(3)
             
     except KeyboardInterrupt:
