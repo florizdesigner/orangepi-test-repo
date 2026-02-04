@@ -32,9 +32,6 @@ print("=" * 50)
 print("Quick E-ink Display Test")
 print("=" * 50)
 
-# Ask user for mock or real
-use_mock = input("\nUse MOCK display? (y/n, default=y): ").lower() != 'n'
-
 display = DisplayManager(config.DISPLAY_MODEL)
 
 try:
