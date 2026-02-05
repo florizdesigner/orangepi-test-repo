@@ -108,7 +108,10 @@ class NFCManager:
         try:
             # Try to read NDEF data (if available)
             valid, uid = self._read_and_verify_hmac(self.signer)
-            if valid:
+            if valid == None: 
+                return None
+            
+            if valid == True:
                 logger.info(f"Successfully readed tag, uid={uid}")
                 return uid
             else:
@@ -279,7 +282,7 @@ class NFCManager:
         """
         text = self._read_ndef_text()
         if not text:
-            return False, None
+            return None, None
 
         try:
             payload = json.loads(text)
@@ -319,7 +322,7 @@ if __name__ == "__main__":
         while True:
             text = reader.read_tag()
             if text:
-               reader.stop_reading() 
+                sleep(1)
     except KeyboardInterrupt:
         print("\nStopping...")
     finally:
