@@ -305,42 +305,11 @@ class NFCManager:
                 logger.error(f"Error closing UART: {e}")
 
 
-class MockNFCReader(NFCReader):
-    """Mock NFC reader for testing without hardware"""
-    
-    def __init__(self):
-        super().__init__()
-        self.mock_tags = ["USER001", "USER002", "USER003"]
-        self.mock_index = 0
-    
-    def initialize(self):
-        logger.info("Mock NFC reader initialized")
-    
-    def read_tag(self, timeout: float = 0.1) -> Optional[str]:
-        if not self.reading:
-            return None
-        
-        # Simulate tag detection every 5 seconds
-        time.sleep(5)
-        
-        user_id = self.mock_tags[self.mock_index % len(self.mock_tags)]
-        self.mock_index += 1
-        
-        logger.info(f"Mock tag read: {user_id}")
-        return user_id
-    
-    def cleanup(self):
-        logger.info("Mock NFC reader cleaned up")
-
-
 # Example usage
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     
-    # Use mock reader for testing
     reader = NFCReader(config.NFC_UART_PORT, config.NFC_BAUDRATE)
-    secret = b"SUPER_SECRET_KEY_32_BYTES"
-    hmac_signer = NFCHMAC(secret)
     reader.initialize()
     reader.start_reading()
     
