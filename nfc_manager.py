@@ -107,7 +107,7 @@ class NFCManager:
         
         try:
             # Try to read NDEF data (if available)
-            valid, uid = self._read_and_verify_hmac(hmac_signer)
+            valid, uid = self._read_and_verify_hmac(self.signer)
             if valid:
                 logger.info(f"Successfully readed tag, uid={uid}")
                 return uid
