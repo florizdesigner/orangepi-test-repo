@@ -134,8 +134,8 @@ class NFCManager:
             return None
         
         try:
-            # Try to read a tag (non-blocking)
-            return self.(text, self.signer, timeout)
+            # Try to write a tag (non-blocking)
+            return self._write_secure_hmac(text, self.signer, timeout)
             
         except Exception as e:
             logger.error(f"Error writing NFC tag: {e}")
@@ -195,7 +195,7 @@ class NFCManager:
             logger.error(f"Failed to write NDEF: {e}")
             return False
 
-    def (self, text: str, hmac_signer: NFCHMAC, timeout: float = 0.1) -> bool:
+    def _write_secure_hmac(self, text: str, hmac_signer: NFCHMAC, timeout: float = 0.1) -> bool:
         """
         Записать text + timestamp + HMAC на NFC метку
         """
