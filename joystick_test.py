@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import RPi.GPIO as GPIO
 import time
-from threading import Thread
+from threading import Event, Lock, Thread
 
 # --------------------------
 # Пины джойстика
@@ -40,19 +40,49 @@ class ButtonManager:
     def __init__(self, pins):
         self.pins = pins
         self.subscribers = {name: [] for name in pins.keys()}
+        self.toggle_threads = {}  # Активные toggle-потоки
+        self.toggle_events = {}   # События для управления toggle
+        self.lock = Lock()        # Для безопасного доступа к словарям
         self._running = False
 
-    def subscribe(self, button_name, callback):
-        """Подписаться на событие нажатия кнопки"""
-        if button_name in self.subscribers:
-            self.subscribers[button_name].append(callback)
-        else:
+    def subscribe(self, button_name, callback, toggle=False):
+        """Подписка на кнопку. toggle=True если callback может работать циклом"""
+        if button_name not in self.subscribers:
             raise ValueError(f"Неизвестная кнопка: {button_name}")
 
+        self.subscribers[button_name].append((callback, toggle))
+
     def notify(self, button_name):
-        """Уведомить всех подписчиков"""
-        for callback in self.subscribers.get(button_name, []):
-            callback()
+        """Вызываем всех подписчиков"""
+        for callback, toggle in self.subscribers.get(button_name, []):
+            if toggle:
+                self._handle_toggle(button_name, callback)
+            else:
+                Thread(target=callback).start()  # обычный callback в отдельном потоке
+
+    def _handle_toggle(self, button_name, callback):
+        """Запуск или остановка toggle-цикла"""
+        with self.lock:
+            # Если цикл уже работает — останавливаем
+            if button_name in self.toggle_threads and self.toggle_threads[button_name].is_alive():
+                print(f"Останавливаем цикл для {button_name}")
+                self.toggle_events[button_name].clear()  # сигнал остановки
+                return
+
+            # Запуск нового цикла
+            print(f"Запускаем цикл для {button_name}")
+            stop_event = Event()
+            stop_event.set()
+            self.toggle_events[button_name] = stop_event
+
+            def loop():
+                while stop_event.is_set():
+                    callback()
+                    time.sleep(0.5)  # задержка между итерациями цикла
+
+            t = Thread(target=loop, daemon=True)
+            self.toggle_threads[button_name] = t
+            t.start()
 
     def _poll_buttons(self):
         """Постоянно проверяем кнопки"""
@@ -66,7 +96,6 @@ class ButtonManager:
             time.sleep(0.05)
 
     def start(self):
-        """Запуск в отдельном потоке"""
         self._running = True
         self.thread = Thread(target=self._poll_buttons, daemon=True)
         self.thread.start()
@@ -74,6 +103,13 @@ class ButtonManager:
     def stop(self):
         self._running = False
         self.thread.join()
+        # Остановим все toggle-потоки
+        with self.lock:
+            for event in self.toggle_events.values():
+                event.clear()
+            for thread in self.toggle_threads.values():
+                thread.join()
+
 
 
 # --------------------------
