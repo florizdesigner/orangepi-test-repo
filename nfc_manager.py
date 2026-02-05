@@ -317,7 +317,9 @@ if __name__ == "__main__":
     
     try:
         while True:
-            reader.read_tag()
+            text = reader.read_tag()
+            if text:
+               reader.stop_reading() 
     except KeyboardInterrupt:
         print("\nStopping...")
     finally:
