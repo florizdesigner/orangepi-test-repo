@@ -5,7 +5,10 @@ Handles NFC tag reading using PN532 via UART
 import logging
 import time
 from typing import Optional
+import json
 import serial
+import config
+from encryptor import NFCHMAC
 
 try:
     from adafruit_pn532.uart import PN532_UART
@@ -171,7 +174,7 @@ class NFCReader:
         try:
             # Wait for a tag
             logger.info("Waiting for NFC tag to write...")
-            uid = self.pn532.(timeout=5)
+            uid = self.pn532.read_passive_target(timeout=5)
             
             if uid is None:
                 logger.warning("No tag detected")
@@ -267,18 +270,21 @@ class NFCReader:
             logger.error(f"Failed to write NDEF: {e}")
             return False
 
-    def write_secure_ndef(self, user_id: str, signer: NFCSigner) -> bool:
-        payload = {
-            "uid": user_id,
-            "ts": int(time.time())
-        }
+    def write_secure_hmac(self, user_id: str, hmac_signer: NFCHMAC) -> bool:
+        """
+        Записать user_id + timestamp + HMAC на NFC метку
+        """
+        ts = int(time.time())
+        payload_dict = {"uid": user_id, "ts": ts}
 
-        data = json.dumps(payload, separators=(",", ":"))
-        payload["sig"] = signer.sign(data)
+        # Генерируем HMAC для user_id + timestamp
+        data_str = json.dumps(payload_dict, separators=(",", ":"))
+        payload_dict["hmac"] = hmac_signer.generate(data_str)
 
-        full = json.dumps(payload, separators=(",", ":"))
+        # Превращаем в JSON для записи на метку
+        payload_json = json.dumps(payload_dict, separators=(",", ":"))
 
-        return self.write_ndef_text(full)
+        return self.write_ndef_text(payload_json)
 
     def read_ndef_text(self) -> Optional[str]:
         """
@@ -342,27 +348,26 @@ class NFCReader:
             logger.error(f"NDEF read failed: {e}")
             return None
 
-    def read_and_verify(self, signer: NFCSigner) -> tuple[bool, str | None]:
+    def read_and_verify_hmac(self, hmac_signer: NFCHMAC) -> tuple[bool, str | None]:
+        """
+        Чтение NDEF с проверкой HMAC
+        """
         text = self.read_ndef_text()
         if not text:
             return False, None
 
         try:
             payload = json.loads(text)
+            data_str = json.dumps({"uid": payload["uid"], "ts": payload["ts"]}, separators=(",", ":"))
 
-            data = json.dumps(
-                {"uid": payload["uid"], "ts": payload["ts"]},
-                separators=(",", ":")
-            )
-
-            if signer.verify(data, payload["sig"]):
+            if hmac_signer.verify(data_str, payload["hmac"]):
                 return True, payload["uid"]
 
             return False, None
 
         except Exception:
             return False, None
-    
+
     def cleanup(self):
         """Clean up resources"""
         self.stop_reading()
@@ -409,6 +414,8 @@ if __name__ == "__main__":
     
     # Use mock reader for testing
     reader = NFCReader(config.NFC_UART_PORT, config.NFC_BAUDRATE)
+    secret = b"SUPER_SECRET_KEY_32_BYTES"
+    hmac_signer = NFCHMAC(secret)
     reader.initialize()
     reader.start_reading()
     
@@ -416,13 +423,7 @@ if __name__ == "__main__":
     
     try:
         while True:
-            tag_id = reader.read_tag()
-            if tag_id:
-                print(f"Tag detected: {tag_id}")
-            time.sleep(0.5)
-            reader = NFCReader()
-            signer = NFCSigner(private_key_path="private.pem")
-            reader.write_secure_ndef("USER_1001", signer)
+            reader.write_secure_hmac("USER_1001", hmac_signer)
     except KeyboardInterrupt:
         print("\nStopping...")
     finally:
