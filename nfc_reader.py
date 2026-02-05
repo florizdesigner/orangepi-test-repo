@@ -115,107 +115,6 @@ class NFCReader:
         except Exception as e:
             logger.error(f"Error reading NFC tag: {e}")
             return None
-    
-    def _read_ndef_user_id(self, uid) -> Optional[str]:
-        """
-        Try to read user ID from NDEF message (text format)
-        
-        Args:
-            uid: Tag UID
-            
-        Returns:
-            User ID if found in NDEF, None otherwise
-        """
-        try:
-            # Try to read NDEF text record from tag
-            # For NTAG21x tags with NDEF, we need to read blocks
-            
-            # Block 4 onwards typically contains NDEF message
-            # This is a simplified implementation - may need adjustment based on actual tag
-            
-            # Try to read text data from tag
-            # The exact implementation depends on tag type (NTAG213/215/216, Mifare Classic, etc.)
-            
-            # For now, we'll try to read common NDEF text blocks
-            # Typically NDEF text record starts at block 4
-            
-            # NOTE: This is placeholder - actual implementation may vary
-            # depending on your specific NFC tag model and data structure
-            
-            logger.debug("Attempting to read NDEF text from tag")
-            
-            # If you're using NTAG tags, you can read blocks like this:
-            # data = self.pn532.ntag2xx_read_block(4)  # Start reading from block 4
-            # Then parse the NDEF message to extract text
-            
-            # For simple text storage, you might just have the user ID as plain text
-            # in specific blocks without full NDEF encoding
-            
-            return None  # Will fall back to UID
-            
-        except Exception as e:
-            logger.debug(f"Could not read NDEF data: {e}")
-            return None
-    
-    def write_user_id(self, user_id: str) -> bool:
-        """
-        Write user ID as text to an NFC tag (for setup purposes)
-        
-        Args:
-            user_id: User ID to write (text format)
-            
-        Returns:
-            True if successful, False otherwise
-        """
-        if self.pn532 is None:
-            logger.error("NFC reader not initialized")
-            return False
-        
-        try:
-            # Wait for a tag
-            logger.info("Waiting for NFC tag to write...")
-            uid = self.pn532.read_passive_target(timeout=5)
-            
-            if uid is None:
-                logger.warning("No tag detected")
-                return False
-            
-            logger.info(f"Tag detected, writing user ID: {user_id}")
-            
-            # Write user ID as text to tag
-            # For NTAG213/215/216, we can write to blocks starting at block 4
-            
-            # Convert user_id string to bytes
-            user_id_bytes = user_id.encode('utf-8')
-            
-            # Pad to 4-byte blocks (NTAG uses 4 bytes per block)
-            # NTAG blocks: each block is 4 bytes
-            block_size = 4
-            padded_data = user_id_bytes + b'\x00' * (block_size - len(user_id_bytes) % block_size)
-            
-            # Write to blocks starting at block 4 (NDEF data area)
-            # This is a simplified approach - for full NDEF, you'd need proper NDEF formatting
-            start_block = 4
-            
-            for i in range(0, len(padded_data), block_size):
-                block_num = start_block + (i // block_size)
-                block_data = padded_data[i:i+block_size]
-                
-                # Write block
-                # Note: ntag2xx_write_block is available in some PN532 libraries
-                # You may need to use a different method depending on your tag type
-                
-                logger.debug(f"Writing block {block_num}: {block_data.hex()}")
-                
-                # Example (uncomment when using real hardware):
-                # self.pn532.ntag2xx_write_block(block_num, block_data)
-            
-            logger.info("User ID written successfully (text format)")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to write to tag: {e}")
-            return False
 
     def write_ndef_text(self, text: str) -> bool:
         """
@@ -286,9 +185,12 @@ class NFCReader:
 
         return self.write_ndef_text(payload_json)
 
-    def read_ndef_text(self) -> Optional[str]:
+    def read_ndef_text(self, timeout: float = 1.0) -> Optional[str]:
         """
         Read NDEF Text Record from NFC Forum Type 2 Tag
+
+        Args:
+            timeout: Timeout for tag detection in seconds
 
         Returns:
             Text if found, None otherwise
@@ -297,20 +199,22 @@ class NFCReader:
             return None
 
         try:
-            logger.debug("Reading NDEF TLV")
+            # 1️⃣ Дождаться появления метки
+            uid = self.pn532.read_passive_target(timeout=timeout)
+            if uid is None:
+                return None  # Нет метки
 
+            logger.debug(f"NFC tag detected: UID={' '.join(f'{b:02X}' for b in uid)}")
+
+            # 2️⃣ Читать блоки NDEF
             data = b""
-            block = 4
-
-            # Read up to 32 blocks (~128 bytes)
-            for _ in range(32):
+            block = 4  # NDEF начинается с блока 4
+            for _ in range(32):  # читаем до 32 блоков (~128 байт)
                 chunk = self.pn532.ntag2xx_read_block(block)
                 if chunk is None:
                     break
-
                 data += bytes(chunk)
                 block += 1
-
                 if b'\xFE' in chunk:
                     break
 
@@ -321,24 +225,19 @@ class NFCReader:
             length = data[1]
             ndef = data[2:2 + length]
 
-            # Parse NDEF Record header
-            if len(ndef) < 4:
-                return None
-
-            if ndef[0] != 0xD1:
+            # 3️⃣ Парсинг NDEF Text Record
+            if len(ndef) < 4 or ndef[0] != 0xD1:
                 logger.warning("Not a valid NDEF Text record")
                 return None
 
             type_length = ndef[1]
             payload_length = ndef[2]
             record_type = ndef[3:3 + type_length]
-
             if record_type != b"T":
                 logger.warning("Record is not TEXT")
                 return None
 
             payload = ndef[3 + type_length:3 + type_length + payload_length]
-
             lang_len = payload[0]
             text = payload[1 + lang_len:].decode("utf-8", errors="ignore")
 
