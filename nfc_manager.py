@@ -322,7 +322,7 @@ if __name__ == "__main__":
         while True:
             text = reader.read_tag()
             if text:
-                sleep(1)
+                time.sleep(1)
     except KeyboardInterrupt:
         print("\nStopping...")
     finally:
