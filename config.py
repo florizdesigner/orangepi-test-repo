@@ -19,6 +19,7 @@ API_TOKEN = os.getenv("API_TOKEN")  # Optional: if you have token directly
 # NFC Reader Configuration
 NFC_UART_PORT = "/dev/serial0"  # or "/dev/ttyAMA0"
 NFC_BAUDRATE = 115200
+HMAC_SECRET = b"SUPER_SECRET_KEY_32_BYTES"
 
 # Display Configuration
 # Waveshare 3.7" E-ink display - 400x168 pixels (landscape orientation)

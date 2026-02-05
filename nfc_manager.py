@@ -20,7 +20,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class NFCReader:
+class NFCManager:
     """Manager for PN532 NFC reader via UART"""
     
     def __init__(self, uart_port: str = "/dev/serial0", baudrate: int = 115200):
@@ -36,6 +36,8 @@ class NFCReader:
         self.pn532 = None
         self.uart = None
         self.reading = False
+        self.writing = False
+        self.signer = None
         
     def initialize(self):
         """Initialize the PN532 NFC reader"""
@@ -61,6 +63,9 @@ class NFCReader:
             # Configure to read RFID tags
             self.pn532.SAM_configuration()
             
+            secret = config.HMAC_SECRET
+            self.signer = NFCHMAC(secret)
+
             logger.info("NFC reader initialized successfully")
             
         except Exception as e:
@@ -76,6 +81,16 @@ class NFCReader:
         """Stop reading mode"""
         self.reading = False
         logger.info("NFC reader stopped")
+
+    def start_writing(self):
+        """Start reading mode"""
+        self.writing = True
+        logger.info("NFC writer started")
+    
+    def stop_writing(self):
+        """Stop reading mode"""
+        self.writing = False
+        logger.info("NFC writer stopped")
     
     def read_tag(self, timeout: float = 0.1) -> Optional[str]:
         """
@@ -91,32 +106,43 @@ class NFCReader:
             return None
         
         try:
-            # Try to read a tag (non-blocking)
-            uid = self.pn532.read_passive_target(timeout=timeout)
-            
-            if uid is not None:
-                # Convert UID bytes to hex string
-                uid_hex = ''.join(['{:02X}'.format(i) for i in uid])
-                logger.info(f"NFC tag detected: UID={uid_hex}")
-                
-                # Try to read NDEF data (if available)
-                user_id = self._read_ndef_user_id(uid)
-                
-                if user_id:
-                    logger.info(f"User ID from NDEF: {user_id}")
-                    return user_id
-                else:
-                    # Fallback: use UID as user ID
-                    logger.info(f"Using UID as user ID: {uid_hex}")
-                    return uid_hex
-            
+            # Try to read NDEF data (if available)
+            valid, uid = self._read_and_verify_hmac(hmac_signer)
+            if valid:
+                logger.info(f"Successfully readed tag, uid={uid}")
+                return uid
+            else:
+                logger.warning("❌ Invalid or cloned tag")
+                    
             return None
             
         except Exception as e:
             logger.error(f"Error reading NFC tag: {e}")
             return None
 
-    def write_ndef_text(self, text: str) -> bool:
+    def write_tag(self, text: str, timeout: float = 0.1) -> Optional[bool]:
+        """
+        Try to write an NFC tag
+        
+        Args:
+            timeout: Timeout in seconds for tag detection
+            
+        Returns:
+            User ID as string if tag detected, None otherwise
+        """
+        if not self.writing or self.pn532 is None:
+            return None
+        
+        try:
+            # Try to read a tag (non-blocking)
+            return self.(text, self.signer, timeout)
+            
+        except Exception as e:
+            logger.error(f"Error writing NFC tag: {e}")
+            return None
+
+
+    def _write_ndef_text(self, text: str, timeout: float = 0.1) -> bool:
         """
         Write NDEF Text record to NFC tag (NTAG213/215/216)
 
@@ -132,7 +158,7 @@ class NFCReader:
 
         try:
             logger.info("Waiting for NFC tag to write...")
-            uid = self.pn532.read_passive_target(timeout=10)
+            uid = self.pn532.read_passive_target(timeout=timeout)
 
             if uid is None:
                 logger.warning("No tag detected")
@@ -169,23 +195,23 @@ class NFCReader:
             logger.error(f"Failed to write NDEF: {e}")
             return False
 
-    def write_secure_hmac(self, user_id: str, hmac_signer: NFCHMAC) -> bool:
+    def (self, text: str, hmac_signer: NFCHMAC, timeout: float = 0.1) -> bool:
         """
-        Записать user_id + timestamp + HMAC на NFC метку
+        Записать text + timestamp + HMAC на NFC метку
         """
         ts = int(time.time())
-        payload_dict = {"uid": user_id, "ts": ts}
+        payload_dict = {"uid": text, "ts": ts}
 
-        # Генерируем HMAC для user_id + timestamp
+        # Генерируем HMAC для text + timestamp
         data_str = json.dumps(payload_dict, separators=(",", ":"))
         payload_dict["hmac"] = hmac_signer.generate(data_str)
 
         # Превращаем в JSON для записи на метку
         payload_json = json.dumps(payload_dict, separators=(",", ":"))
 
-        return self.write_ndef_text(payload_json)
+        return self._write_ndef_text(payload_json, timeout)
 
-    def read_ndef_text(self, timeout: float = 1.0) -> Optional[str]:
+    def _read_ndef_text(self, timeout: float = 1.0) -> Optional[str]:
         """
         Read NDEF Text Record from NFC Forum Type 2 Tag
 
@@ -247,11 +273,11 @@ class NFCReader:
             logger.error(f"NDEF read failed: {e}")
             return None
 
-    def read_and_verify_hmac(self, hmac_signer: NFCHMAC) -> tuple[bool, str | None]:
+    def _read_and_verify_hmac(self, hmac_signer: NFCHMAC) -> tuple[bool, str | None]:
         """
         Чтение NDEF с проверкой HMAC
         """
-        text = self.read_ndef_text()
+        text = self._read_ndef_text()
         if not text:
             return False, None
 
@@ -322,7 +348,7 @@ if __name__ == "__main__":
     
     try:
         while True:
-            reader.write_secure_hmac("USER_1001", hmac_signer)
+            reader.read_tag()
     except KeyboardInterrupt:
         print("\nStopping...")
     finally:
