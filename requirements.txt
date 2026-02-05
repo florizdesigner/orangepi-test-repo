@@ -5,6 +5,7 @@ python-dotenv>=1.0.0
 # NFC Reader (PN532)
 adafruit-circuitpython-pn532>=2.3.0
 pyserial>=3.5
+cryptography
 
 # Display (Waveshare E-ink)
 # Note: Install waveshare-epd library from Waveshare's repository

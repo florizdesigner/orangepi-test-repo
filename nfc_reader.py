@@ -171,7 +171,7 @@ class NFCReader:
         try:
             # Wait for a tag
             logger.info("Waiting for NFC tag to write...")
-            uid = self.pn532.read_passive_target(timeout=5)
+            uid = self.pn532.(timeout=5)
             
             if uid is None:
                 logger.warning("No tag detected")
@@ -213,6 +213,155 @@ class NFCReader:
         except Exception as e:
             logger.error(f"Failed to write to tag: {e}")
             return False
+
+    def write_ndef_text(self, text: str) -> bool:
+        """
+        Write NDEF Text record to NFC tag (NTAG213/215/216)
+
+        Args:
+            text: Text to write into NFC tag
+
+        Returns:
+            True if success, False otherwise
+        """
+        if self.pn532 is None:
+            logger.error("NFC reader not initialized")
+            return False
+
+        try:
+            logger.info("Waiting for NFC tag to write...")
+            uid = self.pn532.read_passive_target(timeout=10)
+
+            if uid is None:
+                logger.warning("No tag detected")
+                return False
+
+            logger.info(f"Tag detected, writing NDEF text: {text}")
+
+            # Build NDEF Text record
+            text_bytes = text.encode("utf-8")
+            lang = b"en"
+
+            payload = bytes([len(lang)]) + lang + text_bytes
+            record = b"\xD1\x01" + bytes([len(payload)]) + b"T" + payload
+
+            ndef_message = b"\x03" + bytes([len(record)]) + record + b"\xFE"
+
+            # Pad to 4-byte blocks
+            if len(ndef_message) % 4 != 0:
+                ndef_message += b"\x00" * (4 - len(ndef_message) % 4)
+
+            start_block = 4
+
+            for i in range(0, len(ndef_message), 4):
+                block_num = start_block + (i // 4)
+                block_data = ndef_message[i:i + 4]
+
+                logger.debug(f"Writing block {block_num}: {block_data.hex()}")
+                self.pn532.ntag2xx_write_block(block_num, block_data)
+
+            logger.info("NDEF text written successfully")
+            return True
+
+        except Exception as e:
+            logger.error(f"Failed to write NDEF: {e}")
+            return False
+
+    def write_secure_ndef(self, user_id: str, signer: NFCSigner) -> bool:
+        payload = {
+            "uid": user_id,
+            "ts": int(time.time())
+        }
+
+        data = json.dumps(payload, separators=(",", ":"))
+        payload["sig"] = signer.sign(data)
+
+        full = json.dumps(payload, separators=(",", ":"))
+
+        return self.write_ndef_text(full)
+
+    def read_ndef_text(self) -> Optional[str]:
+        """
+        Read NDEF Text Record from NFC Forum Type 2 Tag
+
+        Returns:
+            Text if found, None otherwise
+        """
+        if self.pn532 is None:
+            return None
+
+        try:
+            logger.debug("Reading NDEF TLV")
+
+            data = b""
+            block = 4
+
+            # Read up to 32 blocks (~128 bytes)
+            for _ in range(32):
+                chunk = self.pn532.ntag2xx_read_block(block)
+                if chunk is None:
+                    break
+
+                data += bytes(chunk)
+                block += 1
+
+                if b'\xFE' in chunk:
+                    break
+
+            if not data or data[0] != 0x03:
+                logger.warning("No NDEF TLV found")
+                return None
+
+            length = data[1]
+            ndef = data[2:2 + length]
+
+            # Parse NDEF Record header
+            if len(ndef) < 4:
+                return None
+
+            if ndef[0] != 0xD1:
+                logger.warning("Not a valid NDEF Text record")
+                return None
+
+            type_length = ndef[1]
+            payload_length = ndef[2]
+            record_type = ndef[3:3 + type_length]
+
+            if record_type != b"T":
+                logger.warning("Record is not TEXT")
+                return None
+
+            payload = ndef[3 + type_length:3 + type_length + payload_length]
+
+            lang_len = payload[0]
+            text = payload[1 + lang_len:].decode("utf-8", errors="ignore")
+
+            return text
+
+        except Exception as e:
+            logger.error(f"NDEF read failed: {e}")
+            return None
+
+    def read_and_verify(self, signer: NFCSigner) -> tuple[bool, str | None]:
+        text = self.read_ndef_text()
+        if not text:
+            return False, None
+
+        try:
+            payload = json.loads(text)
+
+            data = json.dumps(
+                {"uid": payload["uid"], "ts": payload["ts"]},
+                separators=(",", ":")
+            )
+
+            if signer.verify(data, payload["sig"]):
+                return True, payload["uid"]
+
+            return False, None
+
+        except Exception:
+            return False, None
     
     def cleanup(self):
         """Clean up resources"""
@@ -259,7 +408,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     
     # Use mock reader for testing
-    reader = MockNFCReader()
+    reader = NFCReader(config.NFC_UART_PORT, config.NFC_BAUDRATE)
     reader.initialize()
     reader.start_reading()
     
@@ -271,6 +420,9 @@ if __name__ == "__main__":
             if tag_id:
                 print(f"Tag detected: {tag_id}")
             time.sleep(0.5)
+            reader = NFCReader()
+            signer = NFCSigner(private_key_path="private.pem")
+            reader.write_secure_ndef("USER_1001", signer)
     except KeyboardInterrupt:
         print("\nStopping...")
     finally:
