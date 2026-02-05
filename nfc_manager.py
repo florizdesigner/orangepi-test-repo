@@ -309,7 +309,7 @@ class NFCManager:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     
-    reader = NFCReader(config.NFC_UART_PORT, config.NFC_BAUDRATE)
+    reader = NFCManager(config.NFC_UART_PORT, config.NFC_BAUDRATE)
     reader.initialize()
     reader.start_reading()
     
