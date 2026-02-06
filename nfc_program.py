@@ -5,8 +5,11 @@ Tool for writing user IDs to NFC tags
 import logging
 import threading
 import time
-from joystick_test import BUTTON_PINS, ButtonManager
-from nfc_manager import NFCManager
+from core.event_bus import EventBus
+from core.task import TaskManager
+from joystick_test import BUTTON_PINS
+from manager.button_manager import ButtonManager
+from manager.nfc_manager import NFCManager
 import RPi.GPIO as GPIO
 import config
 
@@ -76,42 +79,20 @@ def rfid_write_loop(stop_event):
     reader.stop_writing()
     print("🛑 RFID writing loop stopped")
 
-rfid_task = ToggleTask(rfid_loop)
-rfid_write_task = ToggleTask(rfid_write_loop)
+bus = EventBus()
+tasks = TaskManager()
 
-manager.subscribe("SET", rfid_task.toggle)
-manager.subscribe("RST", rfid_write_task.toggle)
+tasks.register("rfid", rfid_loop)
 
-# Подписываемся на события
-# manager.subscribe("UP", lambda: print("⬆️  ВВЕРХ"))
-# manager.subscribe("DOWN", lambda: print("⬇️  ВНИЗ"))
-# manager.subscribe("LEFT", lambda: print("⬅️  ВЛЕВО"))
-# manager.subscribe("RIGHT", lambda: print("➡️  ВПРАВО"))
-# manager.subscribe("MID", lambda: print("🔘 КНОПКА НАЖАТА"))
-# manager.subscribe("RST", lambda: print("🔄 RST НАЖАТА"))
-# manager.subscribe("SET", lambda: print("⚙️  SET НАЖАТА"))
+bus.subscribe("btn.SET", lambda: tasks.toggle("rfid"))
 
-print("Менеджер кнопок запущен. Нажмите Ctrl+C для выхода.")
-print("-" * 40)
-manager.start()
+buttons = ButtonManager(BUTTON_PINS, bus)
+buttons.start()
 
 try:
     while True:
-        time.sleep(1)  # основной поток ничего не делает
+        time.sleep(1)
 except KeyboardInterrupt:
-    print("\nВыход...")
-finally:
-    manager.stop()
-    reader.cleanup()
+    print("Exiting...")
+    buttons.stop()
     GPIO.cleanup()
-
-# -------------------------
-# Запись на метку
-# -------------------------
-# reader.start_writing()
-# success = reader.write_tag("USER_1001")
-# if success:
-#     print("✅ Tag written successfully")
-# else:
-#     print("❌ Failed to write tag")
-# reader.stop_writing()
