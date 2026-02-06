@@ -4,20 +4,28 @@ import time
 from threading import Event, Lock, Thread
 
 # --------------------------
-# Пины джойстика
+# Пины джойстика BOARD
 # --------------------------
-UP = 40
-DOWN = 38
-LEFT = 37
-RIGHT = 36
-MID = 35
-RST = 33
-SET = 31
+# UP = 40
+# DOWN = 38
+# LEFT = 37
+# RIGHT = 36
+# MID = 35
+# RST = 33
+# SET = 31
+# GPIO.setmode(GPIO.BOARD)
 
 # --------------------------
-# Настройка GPIO
+# Пины джойстика BCM
 # --------------------------
-GPIO.setmode(GPIO.BOARD)
+UP = 21
+DOWN = 20
+LEFT = 26
+RIGHT = 16
+MID = 19
+RST = 13
+SET = 6
+GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 BUTTON_PINS = {
