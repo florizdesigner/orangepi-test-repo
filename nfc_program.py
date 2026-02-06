@@ -81,8 +81,10 @@ def rfid_write_loop(stop_event):
     print("🛑 RFID writing loop stopped")
 
 tasks.register("rfid", rfid_loop)
+tasks.register("rfid_write", rfid_write_loop)
 
 bus.subscribe("btn.SET", lambda: tasks.toggle("rfid"))
+bus.subscribe("btn.RST", lambda: tasks.toggle("rfid_write"))
 buttons.start()
 
 try:
