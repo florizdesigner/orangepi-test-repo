@@ -26,31 +26,50 @@ manager = ButtonManager(BUTTON_PINS)
 
 reader_event = threading.Event()
 
-def rfid_loop():
-    """Бесконечный цикл чтения RFID с проверкой HMAC"""
-    if reader_event.is_set():
-        # Если цикл уже запущен — останавливаем его
-        print("Останавливаем RFID чтение...")
-        reader_event.clear()
-        # reader.stop_reading()
-        return
+class ToggleTask:
+    def __init__(self, target):
+        self.target = target
+        self.event = threading.Event()
+        self.thread = None
+        self.lock = threading.Lock()
 
-    # Запуск нового цикла
-    print("Запускаем RFID чтение...")
-    reader_event.set()
+    def toggle(self):
+        with self.lock:
+            if self.thread and self.thread.is_alive():
+                print("🛑 Остановка задачи")
+                self.event.clear()
+                return
 
-    while reader_event.is_set():
+            print("▶️ Запуск задачи")
+            self.event.set()
+            self.thread = threading.Thread(
+                target=self._runner,
+                daemon=True
+            )
+            self.thread.start()
+
+    def _runner(self):
+        self.target(self.event)
+
+
+def rfid_loop(stop_event):
+    print("📡 RFID loop started")
+
+    while stop_event.is_set():
         reader.start_reading()
+
         uid = reader.read_tag()
         if uid:
-            print("✅ Valid tag read, uid:", uid)
-        # reader.stop_reading()
-        time.sleep(0.5)  # небольшой таймаут, чтобы не перегружать CPU
+            print("✅ Valid tag:", uid)
+        else:
+            print("❌ Invalid or no tag")
+        time.sleep(0.3)
 
-# -------------------------
-# Подключаем к кнопке, например, SET
-# -------------------------
-manager.subscribe("SET", lambda: threading.Thread(target=rfid_loop).start(), toggle=True)
+    print("🛑 RFID loop stopped")
+
+rfid_task = ToggleTask(rfid_loop)
+
+manager.subscribe("SET", rfid_task.toggle)
 
 # Подписываемся на события
 # manager.subscribe("UP", lambda: print("⬆️  ВВЕРХ"))
