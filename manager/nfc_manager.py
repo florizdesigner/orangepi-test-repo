@@ -8,7 +8,7 @@ from typing import Optional
 import json
 import serial
 import config
-from encryptor import NFCHMAC
+from core.encryptor import NFCHMAC
 
 try:
     from adafruit_pn532.uart import PN532_UART
