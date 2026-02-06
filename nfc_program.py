@@ -43,9 +43,7 @@ def rfid_loop():
         uid = reader.read_tag()
         if uid:
             print("✅ Valid tag read, uid:", uid)
-        else:
-            print("❌ Invalid or no tag detected")
-        reader.stop_reading()
+        # reader.stop_reading()
         time.sleep(0.5)  # небольшой таймаут, чтобы не перегружать CPU
 
 # -------------------------
