@@ -24,8 +24,6 @@ reader.initialize()
 
 manager = ButtonManager(BUTTON_PINS)
 
-reader_event = threading.Event()
-
 class ToggleTask:
     def __init__(self, target):
         self.target = target
@@ -53,23 +51,36 @@ class ToggleTask:
 
 
 def rfid_loop(stop_event):
-    print("📡 RFID loop started")
+    print("📡 RFID reading loop started")
+    reader.start_reading()
 
     while stop_event.is_set():
-        reader.start_reading()
-
         uid = reader.read_tag()
         if uid:
             print("✅ Valid tag:", uid)
-        else:
-            print("❌ Invalid or no tag")
         time.sleep(0.3)
 
-    print("🛑 RFID loop stopped")
+    reader.stop_reading()
+    print("🛑 RFID reading loop stopped")
+
+def rfid_write_loop(stop_event):
+    print("📡 RFID writing loop started")
+    reader.start_writing()
+
+    while stop_event.is_set():
+        result = reader.write_tag("966243980")
+        if result:
+            print("✅ Tag was writed")
+        time.sleep(0.3)
+
+    reader.stop_writing()
+    print("🛑 RFID writing loop stopped")
 
 rfid_task = ToggleTask(rfid_loop)
+rfid_write_task = ToggleTask(rfid_write_loop)
 
 manager.subscribe("SET", rfid_task.toggle)
+manager.subscribe("RST", rfid_write_task.toggle)
 
 # Подписываемся на события
 # manager.subscribe("UP", lambda: print("⬆️  ВВЕРХ"))
