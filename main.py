@@ -10,7 +10,7 @@ from typing import Optional
 
 from api_client import VelowAPIClient
 from nfc_reader import NFCReader
-from display_manager import DisplayManager
+from manager.display_manager import DisplayManager
 import config
 
 try:

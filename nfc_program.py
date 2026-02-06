@@ -24,8 +24,9 @@ logger = logging.getLogger(__name__)
 # -------------------------
 reader = NFCManager(uart_port="/dev/serial0", baudrate=115200, hmac_secret=config.HMAC_SECRET)
 reader.initialize()
-
-manager = ButtonManager(BUTTON_PINS)
+bus = EventBus()
+tasks = TaskManager()
+buttons = ButtonManager(BUTTON_PINS, bus)
 
 class ToggleTask:
     def __init__(self, target):
@@ -79,14 +80,9 @@ def rfid_write_loop(stop_event):
     reader.stop_writing()
     print("🛑 RFID writing loop stopped")
 
-bus = EventBus()
-tasks = TaskManager()
-
 tasks.register("rfid", rfid_loop)
 
 bus.subscribe("btn.SET", lambda: tasks.toggle("rfid"))
-
-buttons = ButtonManager(BUTTON_PINS, bus)
 buttons.start()
 
 try:
