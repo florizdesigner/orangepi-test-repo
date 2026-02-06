@@ -32,6 +32,7 @@ def rfid_loop():
         # Если цикл уже запущен — останавливаем его
         print("Останавливаем RFID чтение...")
         reader_event.clear()
+        reader.stop_reading()
         return
 
     # Запуск нового цикла
