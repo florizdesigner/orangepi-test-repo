@@ -46,7 +46,8 @@ class TaskManager:
                 return
 
             if self.active:
-                self.tasks[self.active].stop()
+                print("Please stop previous task to start a new one")
+                # self.tasks[self.active].stop()
 
             self.tasks[name].start()
             self.active = name
