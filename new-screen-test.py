@@ -1,36 +1,28 @@
 import board
 import digitalio
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 from adafruit_rgb_display import st7789
 
-# Настройка пинов
-cs_pin = digitalio.DigitalInOut(board.CE0)
+# Пины
 dc_pin = digitalio.DigitalInOut(board.D24)
 reset_pin = digitalio.DigitalInOut(board.D25)
 
-# Инициализация дисплея ST7789
+# Инициализация БЕЗ cs (передаём None или не указываем)
 display = st7789.ST7789(
     board.SPI(),
-    cs=cs_pin,
     dc=dc_pin,
     rst=reset_pin,
+    cs=None,  # Нет CS пина
     width=240,
     height=240,
-    baudrate=24000000,
-    x_offset=0,  # Если изображение смещено, подберите offset
-    y_offset=0
+    baudrate=40000000,  # Можно попробовать выше
+    rotation=0
 )
 
-# Создание изображения
-image = Image.new("RGB", (240, 240))
+# Тест
+image = Image.new("RGB", (240, 240), (0, 100, 200))
 draw = ImageDraw.Draw(image)
+draw.ellipse((70, 70, 170, 170), fill=(255, 255, 0), outline=(255, 0, 0))
+draw.text((90, 110), "Hello!", fill=(0, 0, 0))
 
-# Рисуем градиент и текст
-for y in range(240):
-    color = int(255 * y / 240)
-    draw.line([(0, y), (240, y)], fill=(color, 0, 255 - color))
-
-draw.text((60, 110), "Raspberry Pi", fill=(255, 255, 255))
-
-# Выводим на экран
 display.image(image)
