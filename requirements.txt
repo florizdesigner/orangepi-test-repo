@@ -13,6 +13,7 @@ cryptography
 # Or download from: https://github.com/waveshare/e-Paper
 Pillow>=10.0.0
 adafruit-circuitpython-rgb-display
+st7789
 
 # Raspberry Pi GPIO (if needed for button)
 # RPi.GPIO>=0.7.1  # Uncomment if using physical button
