@@ -1,35 +1,76 @@
-import board
-import busio
-import digitalio
-from adafruit_rgb_display import st7789
-from PIL import Image, ImageDraw
+import spidev
+import RPi.GPIO as GPIO
+import time
 
-# Настройка пинов
-dc = digitalio.DigitalInOut(board.D24)
-rst = digitalio.DigitalInOut(board.D25)
+# Настройка GPIO
+DC_PIN = 24
+RST_PIN = 25
 
-# SPI
-spi = busio.SPI(clock=board.SCK, MOSI=board.MOSI)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(DC_PIN, GPIO.OUT)
+GPIO.setup(RST_PIN, GPIO.OUT)
 
-# Инициализация без CS
-display = st7789.ST7789(
-    spi,
-    height=240,
-    width=240,
-    y_offset=0,
-    x_offset=0,
-    dc=dc,
-    rst=rst,
-    cs=None,  # Без CS
-    baudrate=40000000,
-    rotation=0
-)
+# Сброс дисплея
+print("Сброс дисплея...")
+GPIO.output(RST_PIN, GPIO.LOW)
+time.sleep(0.1)
+GPIO.output(RST_PIN, GPIO.HIGH)
+time.sleep(0.1)
 
-# Тест
-image = Image.new("RGB", (240, 240), (255, 0, 0))  # Красный
-draw = ImageDraw.Draw(image)
-draw.rectangle((50, 50, 190, 190), fill=(0, 255, 0))  # Зелёный квадрат
-draw.text((80, 110), "Works!", fill=(255, 255, 255))
+# Открываем SPI
+spi = spidev.SpiDev()
+spi.open(0, 0)  # bus 0, device 0
+spi.max_speed_hz = 24000000
 
-display.image(image)
-print("Готово!")
+def write_command(cmd):
+    GPIO.output(DC_PIN, GPIO.LOW)  # Command mode
+    spi.writebytes([cmd])
+
+def write_data(data):
+    GPIO.output(DC_PIN, GPIO.HIGH)  # Data mode
+    if isinstance(data, list):
+        spi.writebytes(data)
+    else:
+        spi.writebytes([data])
+
+# Инициализация ST7789
+print("Инициализация ST7789...")
+
+write_command(0x01)  # Software reset
+time.sleep(0.15)
+
+write_command(0x11)  # Sleep out
+time.sleep(0.5)
+
+write_command(0x3A)  # Pixel format
+write_data(0x55)     # 16-bit color
+
+write_command(0x36)  # Memory access control
+write_data(0x00)     # RGB order
+
+write_command(0x29)  # Display on
+time.sleep(0.1)
+
+# Заливаем экран красным
+print("Заливка красным...")
+
+write_command(0x2A)  # Column address
+write_data([0x00, 0x00, 0x00, 0xEF])  # 0-239
+
+write_command(0x2B)  # Row address
+write_data([0x00, 0x00, 0x00, 0xEF])  # 0-239
+
+write_command(0x2C)  # Memory write
+
+# Красный цвет в RGB565: 0xF800
+GPIO.output(DC_PIN, GPIO.HIGH)
+red_pixel = [0xF8, 0x00]
+for i in range(240 * 240):
+    spi.writebytes(red_pixel)
+    if i % 10000 == 0:
+        print(f"Прогресс: {i}/{240*240}")
+
+print("Готово! Экран должен быть красным.")
+
+spi.close()
+GPIO.cleanup()
