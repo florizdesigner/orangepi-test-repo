@@ -1,28 +1,34 @@
-import board
-import digitalio
-from PIL import Image, ImageDraw
-from adafruit_rgb_display import st7789
+import ST7789
+from PIL import Image, ImageDraw, ImageFont
 
-# Пины
-dc_pin = digitalio.DigitalInOut(board.D24)
-reset_pin = digitalio.DigitalInOut(board.D25)
-
-# Инициализация БЕЗ cs (передаём None или не указываем)
-display = st7789.ST7789(
-    board.SPI(),
-    dc=dc_pin,
-    rst=reset_pin,
-    cs=None,  # Нет CS пина
+disp = ST7789.ST7789(
+    port=0,
+    cs=1,
+    dc=24,
+    rst=25,
+    backlight=None,
     width=240,
     height=240,
-    baudrate=40000000,  # Можно попробовать выше
-    rotation=0
+    rotation=0,
+    spi_speed_hz=60000000
 )
 
-# Тест
-image = Image.new("RGB", (240, 240), (0, 100, 200))
-draw = ImageDraw.Draw(image)
-draw.ellipse((70, 70, 170, 170), fill=(255, 255, 0), outline=(255, 0, 0))
-draw.text((90, 110), "Hello!", fill=(0, 0, 0))
+disp.begin()
 
-display.image(image)
+# Создаём красивую картинку
+img = Image.new('RGB', (240, 240), color=(0, 50, 100))
+draw = ImageDraw.Draw(img)
+
+# Градиент
+for y in range(240):
+    color = int(255 * y / 240)
+    draw.line([(0, y), (240, y)], fill=(color, 100, 255-color))
+
+# Текст
+draw.text((60, 100), "Raspberry Pi", fill=(255, 255, 255))
+draw.text((70, 130), "ST7789 OK!", fill=(0, 255, 0))
+
+# Круг
+draw.ellipse((90, 50, 150, 110), fill=(255, 255, 0), outline=(255, 0, 0))
+
+disp.display(img)
