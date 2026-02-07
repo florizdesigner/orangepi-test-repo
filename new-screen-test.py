@@ -1,34 +1,53 @@
-import ST7789
-from PIL import Image, ImageDraw, ImageFont
+import board
+import displayio
+from adafruit_st7789 import ST7789
+import terminalio
+from adafruit_display_text import label
 
-disp = ST7789.ST7789(
-    port=0,
-    cs=1,
-    dc=24,
-    rst=25,
-    backlight=None,
-    width=240,
-    height=240,
-    rotation=0,
-    spi_speed_hz=60000000
+# Освобождаем дисплей если занят
+displayio.release_displays()
+
+# Настройка SPI
+spi = board.SPI()
+tft_dc = board.D24
+tft_res = board.D25
+
+# Создаём шину без CS
+display_bus = displayio.FourWire(
+    spi, 
+    command=tft_dc, 
+    reset=tft_res,
+    baudrate=40000000
 )
 
-disp.begin()
+# Инициализация ST7789
+display = ST7789(
+    display_bus, 
+    width=240, 
+    height=240,
+    rotation=0,
+    rowstart=0,
+    colstart=0
+)
 
-# Создаём красивую картинку
-img = Image.new('RGB', (240, 240), color=(0, 50, 100))
-draw = ImageDraw.Draw(img)
+# Создаём группу для отображения
+splash = displayio.Group()
+display.root_group = splash
 
-# Градиент
-for y in range(240):
-    color = int(255 * y / 240)
-    draw.line([(0, y), (240, y)], fill=(color, 100, 255-color))
+# Создаём цветную палитру
+color_bitmap = displayio.Bitmap(240, 240, 1)
+color_palette = displayio.Palette(1)
+color_palette[0] = 0xFF0000  # Красный
 
-# Текст
-draw.text((60, 100), "Raspberry Pi", fill=(255, 255, 255))
-draw.text((70, 130), "ST7789 OK!", fill=(0, 255, 0))
+# Добавляем фон
+bg_sprite = displayio.TileGrid(color_bitmap, pixel_shader=color_palette, x=0, y=0)
+splash.append(bg_sprite)
 
-# Круг
-draw.ellipse((90, 50, 150, 110), fill=(255, 255, 0), outline=(255, 0, 0))
+# Добавляем текст
+text = "Hello Pi!"
+text_area = label.Label(terminalio.FONT, text=text, color=0xFFFFFF, x=80, y=120)
+splash.append(text_area)
 
-disp.display(img)
+print("Дисплей инициализирован!")
+
+# Экран должен стать красным с белым текстом
