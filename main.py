@@ -83,12 +83,13 @@ def rfid_write_loop(stop_event):
     reader.stop_writing()
     print("🛑 RFID writing loop stopped")
 
+ui = DisplayManager(bus, tasks)
 tasks.register("rfid", lambda e: rfid_loop(e, ui.queue))
 tasks.register("rfid_write", rfid_write_loop)
 
 # bus.subscribe("btn.SET", lambda: tasks.toggle("rfid"))
 # bus.subscribe("btn.RST", lambda: tasks.toggle("rfid_write"))
-menu = DisplayManager(bus, tasks)
+
 buttons.start()
 
 try:
