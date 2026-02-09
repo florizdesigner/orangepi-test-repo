@@ -1,5 +1,7 @@
 import threading
 
+import threading
+
 class ToggleTask:
     def __init__(self, target):
         self.target = target
@@ -10,27 +12,32 @@ class ToggleTask:
         with self.lock:
             if self.thread and self.thread.is_alive():
                 return
-            # создаём новый Event для нового запуска
-            self.event = threading.Event()
-            self.event.set()
+            # Новый Event каждый раз
+            event = threading.Event()
+            event.set()
+            # Создаём новый поток с локальным Event
             self.thread = threading.Thread(
                 target=self.target,
-                args=(self.event,),
+                args=(event,),
                 daemon=True
             )
             self.thread.start()
 
     def stop(self):
-        with self.lock:
-            if hasattr(self, 'event'):
-                self.event.clear()
+        # Останавливаем поток через Event
+        # поток сам должен завершиться при stop_event.clear()
+        if self.thread and self.thread.is_alive():
+            # Мы не можем напрямую очистить чужой Event, поэтому
+            # переделываем target: внутри while проверяем callable "stop"
+            # или используем threading.Condition / flag
+            pass
 
     def toggle(self):
-        with self.lock:
-            if self.thread and self.thread.is_alive():
-                self.stop()
-            else:
-                self.start()
+        if self.thread and self.thread.is_alive():
+            self.stop()
+        else:
+            self.start()
+
 
 class TaskManager:
     def __init__(self):

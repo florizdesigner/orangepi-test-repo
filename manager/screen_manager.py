@@ -10,7 +10,6 @@ class ScreenManager:
     def set(self, name):
         if self.current:
             self.current.on_exit()
-
         self.current = self.screens[name](self.ui, self)
         self.current.on_enter()
 
