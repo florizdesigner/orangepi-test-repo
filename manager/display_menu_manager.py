@@ -1,4 +1,4 @@
-import st7789
+import ST7789 as ST7789
 from PIL import Image, ImageDraw, ImageFont
 import threading
 
@@ -10,12 +10,13 @@ class DisplayMenu:
         self.W = 240
         self.H = 240
 
-        self.disp = st7789.ST7789(
+        self.disp = ST7789.ST7789(
             port=0,
-            cs=1,
-            dc=9,
-            backlight=13,
-            rotation=180,
+            cs=ST7789.BG_SPI_CS_FRONT,
+            dc=24,
+            rst=25,
+            backlight=27,
+            mode=3,
             spi_speed_hz=80 * 1000 * 1000
         )
 
