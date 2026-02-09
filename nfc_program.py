@@ -8,6 +8,7 @@ import time
 from core.event_bus import EventBus
 from core.task import TaskManager
 from manager.button_manager import ButtonManager
+from manager.display_manager import DisplayManager
 from manager.display_menu_manager import DisplayMenu
 from manager.nfc_manager import NFCManager
 import RPi.GPIO as GPIO
@@ -85,7 +86,7 @@ tasks.register("rfid_write", rfid_write_loop)
 
 # bus.subscribe("btn.SET", lambda: tasks.toggle("rfid"))
 # bus.subscribe("btn.RST", lambda: tasks.toggle("rfid_write"))
-menu = DisplayMenu(bus, tasks)
+menu = DisplayManager(bus, tasks)
 buttons.start()
 
 try:
