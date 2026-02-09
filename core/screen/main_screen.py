@@ -1,33 +1,24 @@
 from core.screen.base_screen import BaseScreen
-from core.screen.scan_screen import ScanScreen
-
 
 class MainScreen(BaseScreen):
+
     def __init__(self, ui, manager):
-        super().__init__(ui)
-        self.manager = manager
+        super().__init__(ui, manager)
         self.items = [
-            ("Scan", ScanScreen),
-            # ("Write", WriteScreen),
-            # ("Info", InfoScreen),
+            ("Scan", "scan"),
+            ("Write", "write"),
         ]
         self.selected = 0
 
-        ui.bus.subscribe("btn.DOWN", self.down)
-        ui.bus.subscribe("btn.UP", self.up)
+        ui.bus.subscribe("btn.DOWN", self.next)
         ui.bus.subscribe("btn.MID", self.select)
 
-    def down(self):
+    def next(self):
         self.selected = (self.selected + 1) % len(self.items)
-        self.draw()
-
-    def up(self):
-        self.selected = (self.selected - 1) % len(self.items)
-        self.draw()
 
     def select(self):
-        screen_cls = self.items[self.selected][1]
-        self.manager.set(screen_cls(self.ui, self.manager))
+        screen_name = self.items[self.selected][1]
+        self.manager.set(screen_name)
 
     def draw(self):
         d = self.ui.draw
