@@ -7,8 +7,8 @@ import threading
 import time
 from core.event_bus import EventBus
 from core.task import TaskManager
-from joystick_test import BUTTON_PINS
 from manager.button_manager import ButtonManager
+from manager.display_menu_manager import DisplayMenu
 from manager.nfc_manager import NFCManager
 import RPi.GPIO as GPIO
 import config
@@ -26,7 +26,7 @@ reader = NFCManager(uart_port="/dev/serial0", baudrate=115200, hmac_secret=confi
 reader.initialize()
 bus = EventBus()
 tasks = TaskManager()
-buttons = ButtonManager(BUTTON_PINS, bus)
+buttons = ButtonManager(config.BUTTON_PINS, bus)
 
 class ToggleTask:
     def __init__(self, target):
@@ -85,6 +85,7 @@ tasks.register("rfid_write", rfid_write_loop)
 
 bus.subscribe("btn.SET", lambda: tasks.toggle("rfid"))
 bus.subscribe("btn.RST", lambda: tasks.toggle("rfid_write"))
+menu = DisplayMenu(bus, tasks)
 buttons.start()
 
 try:

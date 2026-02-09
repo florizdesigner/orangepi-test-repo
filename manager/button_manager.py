@@ -2,25 +2,6 @@ import RPi.GPIO as GPIO
 import time
 from threading import Thread
 
-UP = 21
-DOWN = 20
-LEFT = 26
-RIGHT = 16
-MID = 19
-RST = 13
-SET = 6
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
-
-BUTTON_PINS = {
-    "UP": UP,
-    "DOWN": DOWN,
-    "LEFT": LEFT,
-    "RIGHT": RIGHT,
-    "MID": MID,
-    "RST": RST,
-    "SET": SET
-}
 
 class ButtonManager:
     def __init__(self, pins, event_bus, debounce=0.15):

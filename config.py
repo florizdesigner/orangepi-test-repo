@@ -29,12 +29,24 @@ DISPLAY_HEIGHT = 400
 DISPLAY_WIDTH = 168
 DISPLAY_MODEL = "epd3in0g"  # Waveshare 3.7" display
 
-# GPIO Configuration (BCM numbering)
-# Physical Pin 31 = BCM GPIO 6
-BUTTON_START_PIN = 6  # Physical pin 31 - Start scanning
-# Physical Pin 33 = BCM GPIO 13  
-BUTTON_STOP_PIN = 13  # Physical pin 33 - Stop scanning
-BUTTON_BOUNCE_TIME = 300  # milliseconds
+# Пины джойстика BCM
+UP = 21
+DOWN = 20
+LEFT = 26
+RIGHT = 16
+MID = 19
+RST = 13
+SET = 6
+
+BUTTON_PINS = {
+    "UP": UP,
+    "DOWN": DOWN,
+    "LEFT": LEFT,
+    "RIGHT": RIGHT,
+    "MID": MID,
+    "RST": RST,
+    "SET": SET
+}
 
 # Application Settings
 MEDIA_DIRECTORY = "./media"  # Directory for images
