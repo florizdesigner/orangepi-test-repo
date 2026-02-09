@@ -35,7 +35,7 @@ class DisplayMenu:
 
         self.bus.subscribe("btn.DOWN", self.next)
         self.bus.subscribe("btn.MID", self.select)
-
+        self.disp.begin()
         self.redraw()
 
     def next(self):
