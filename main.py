@@ -9,7 +9,6 @@ from core.event_bus import EventBus
 from core.task import TaskManager
 from manager.button_manager import ButtonManager
 from manager.display_manager import DisplayManager
-from manager.display_menu_manager import DisplayMenu
 from manager.nfc_manager import NFCManager
 import RPi.GPIO as GPIO
 import config
@@ -28,32 +27,6 @@ reader.initialize()
 bus = EventBus()
 tasks = TaskManager()
 buttons = ButtonManager(config.BUTTON_PINS, bus)
-
-class ToggleTask:
-    def __init__(self, target):
-        self.target = target
-        self.event = threading.Event()
-        self.thread = None
-        self.lock = threading.Lock()
-
-    def toggle(self):
-        with self.lock:
-            if self.thread and self.thread.is_alive():
-                print("🛑 Остановка задачи")
-                self.event.clear()
-                return
-
-            print("▶️ Запуск задачи")
-            self.event.set()
-            self.thread = threading.Thread(
-                target=self._runner,
-                daemon=True
-            )
-            self.thread.start()
-
-    def _runner(self):
-        self.target(self.event)
-
 
 def rfid_loop(stop_event, queue):
     print("📡 RFID reading loop started")

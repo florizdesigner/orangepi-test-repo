@@ -3,7 +3,6 @@ import threading
 class ToggleTask:
     def __init__(self, target):
         self.target = target
-        self.event = threading.Event()
         self.thread = None
         self.lock = threading.Lock()
 
@@ -11,6 +10,8 @@ class ToggleTask:
         with self.lock:
             if self.thread and self.thread.is_alive():
                 return
+            # создаём новый Event для нового запуска
+            self.event = threading.Event()
             self.event.set()
             self.thread = threading.Thread(
                 target=self.target,
@@ -21,13 +22,15 @@ class ToggleTask:
 
     def stop(self):
         with self.lock:
-            self.event.clear()
+            if hasattr(self, 'event'):
+                self.event.clear()
 
     def toggle(self):
-        if self.thread and self.thread.is_alive():
-            self.stop()
-        else:
-            self.start()
+        with self.lock:
+            if self.thread and self.thread.is_alive():
+                self.stop()
+            else:
+                self.start()
 
 class TaskManager:
     def __init__(self):
