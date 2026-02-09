@@ -55,7 +55,7 @@ class ToggleTask:
         self.target(self.event)
 
 
-def rfid_loop(stop_event):
+def rfid_loop(stop_event, queue):
     print("📡 RFID reading loop started")
     reader.start_reading()
 
@@ -63,6 +63,8 @@ def rfid_loop(stop_event):
         uid = reader.read_tag()
         if uid:
             print("✅ Valid tag:", uid)
+            queue.put(("rfid.uid", uid))
+
         time.sleep(0.3)
 
     reader.stop_reading()
@@ -81,7 +83,7 @@ def rfid_write_loop(stop_event):
     reader.stop_writing()
     print("🛑 RFID writing loop stopped")
 
-tasks.register("rfid", rfid_loop)
+tasks.register("rfid", lambda e: rfid_loop(e, ui.queue))
 tasks.register("rfid_write", rfid_write_loop)
 
 # bus.subscribe("btn.SET", lambda: tasks.toggle("rfid"))
