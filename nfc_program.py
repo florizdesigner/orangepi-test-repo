@@ -90,7 +90,7 @@ buttons.start()
 
 try:
     while True:
-        time.sleep(1)
+        time.sleep(0.05)
 except KeyboardInterrupt:
     print("Exiting...")
     buttons.stop()
