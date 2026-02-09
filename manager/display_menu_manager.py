@@ -33,8 +33,8 @@ class DisplayMenu:
         self.selected = 0
         self.lock = threading.Lock()
 
-        self.bus.subscribe("btn.SET", self.next)
-        self.bus.subscribe("btn.RST", self.select)
+        self.bus.subscribe("btn.DOWN", self.next)
+        self.bus.subscribe("btn.MID", self.select)
 
         self.redraw()
 
