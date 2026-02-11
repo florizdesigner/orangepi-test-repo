@@ -83,7 +83,7 @@ class MainScreen(BaseScreen):
             y += 50
 
         # ---------- Нижняя панель статуса ----------
-        footer_y = self.ui.H - 40
+        footer_y = self.ui.H - 20
 
         # Время
         d.text(
@@ -99,14 +99,6 @@ class MainScreen(BaseScreen):
             self.wifi_status,
             font=self.ui.font_small,
             fill=(0, 200, 255),
-        )
-
-        # Температура CPU
-        d.text(
-            (20, footer_y + 20),
-            f"CPU: {self.cpu_temp}",
-            font=self.ui.font_small,
-            fill=(255, 180, 0),
         )
 
         self.ui.disp.display(self.ui.image)
