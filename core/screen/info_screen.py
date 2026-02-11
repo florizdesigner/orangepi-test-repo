@@ -106,11 +106,11 @@ class InfoScreen(BaseScreen):
         )
 
         y = 70
-        line_h = 30
+        line_h = 25
 
         d.text(
             (20, y),
-            f"Время: {self.time_str}",
+            f"Time: {self.time_str}",
             font=self.ui.font_mid,
             fill=(255, 255, 255),
         )
@@ -118,7 +118,7 @@ class InfoScreen(BaseScreen):
 
         d.text(
             (20, y),
-            f"Аптайм: {self.uptime_str}",
+            f"Uptime: {self.uptime_str}",
             font=self.ui.font_mid,
             fill=(200, 200, 200),
         )
@@ -142,7 +142,7 @@ class InfoScreen(BaseScreen):
 
         d.text(
             (20, y),
-            f"RAM свободно: {self.mem_free}",
+            f"RAM free: {self.mem_free}",
             font=self.ui.font_mid,
             fill=(180, 255, 180),
         )
