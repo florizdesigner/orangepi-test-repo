@@ -103,7 +103,7 @@ class MainScreen(BaseScreen):
         d.text(
             (20, footer_y),
             self.time_str,
-            font=self.ui.font_mid,
+            font=self.ui.font_small,
             fill=(255, 255, 255),
         )
 
@@ -111,7 +111,7 @@ class MainScreen(BaseScreen):
         d.text(
             (120, footer_y),
             self.wifi_status,
-            font=self.ui.font_mid,
+            font=self.ui.font_small,
             fill=(0, 200, 255),
         )
 
