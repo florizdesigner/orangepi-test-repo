@@ -6,6 +6,7 @@ class MainScreen(BaseScreen):
         super().__init__(ui, manager)
         self.items = [
             ("Scan", "scan"),
+            ("Wifi", "wifi"),
             ("Write", "write"),
         ]
         self.selected = 0
@@ -13,15 +14,20 @@ class MainScreen(BaseScreen):
         # чтобы можно было безопасно отписываться
 
     def on_enter(self):
+        self.ui.bus.subscribe("btn.UP", self.before)
         self.ui.bus.subscribe("btn.DOWN", self.next)
         self.ui.bus.subscribe("btn.MID", self.select)
 
     def on_exit(self):
+        self.ui.bus.unsubscribe("btn.UP", self.before)
         self.ui.bus.unsubscribe("btn.DOWN", self.next)
         self.ui.bus.unsubscribe("btn.MID", self.select)
 
     def next(self):
         self.selected = (self.selected + 1) % len(self.items)
+
+    def before(self):
+        self.selected = (self.selected - 1) % len(self.items)
 
     def select(self):
         screen_name = self.items[self.selected][1]

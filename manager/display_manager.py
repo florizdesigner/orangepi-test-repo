@@ -6,6 +6,7 @@ import time
 
 from core.screen.main_screen import MainScreen
 from core.screen.scan_screen import ScanScreen
+from core.screen.wifi_screen import WifiScreen
 from manager.screen_manager import ScreenManager
 
 class DisplayManager:
@@ -48,6 +49,7 @@ class DisplayManager:
         # Регистрируем экраны
         self.manager.register("main", MainScreen)
         self.manager.register("scan", ScanScreen)
+        self.manager.register("wifi", WifiScreen)
         # self.manager.register("write", WriteScreen)
 
         # Стартовый экран
