@@ -64,7 +64,7 @@ class WifiScreen(BaseScreen):
             self.status = f"Подключено к {ssid}"
         except Exception as e:
             # Детали ошибки в логах, пользователю краткое сообщение.
-            self.status = f"Ошибка подключения к {ssid}"
+            self.status = f"Ошибка подключения к \n{ssid}"
 
     def _back(self):
         self.manager.set("main")
@@ -175,7 +175,7 @@ class WifiScreen(BaseScreen):
         status_text = self.status or ""
         if status_text:
             d.text(
-                (20, self.ui.H - 20),
+                (20, self.ui.H - 30),
                 status_text,
                 font=self.ui.font_small,
                 fill=(150, 150, 150),
