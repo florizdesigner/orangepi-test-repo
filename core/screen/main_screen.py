@@ -54,33 +54,44 @@ class MainScreen(BaseScreen):
 
         # ---------- Заголовок ----------
         title = "Velow /cc"
-        d.text((20, 15), title, font=self.ui.font_big, fill=(0, 255, 180))
+        d.text((16, 10), title, font=self.ui.font_big, fill=(0, 255, 180))
 
         # Подзаголовок / слоган
         d.text(
-            (20, 50),
+            (16, 40),
             "Регистрация участников",
             font=self.ui.font_small,
             fill=(150, 150, 150),
         )
 
-        # ---------- Меню ----------
-        y = 90
-        for i, (name, _) in enumerate(self.items):
-            is_selected = i == self.selected
+        # ---------- Меню (адаптация под 240x240) ----------
+        max_items = 3  # одновременно показываем не больше трёх пунктов
+        total = len(self.items)
+        start = 0
+        if total > max_items:
+            # Пытаемся держать выбранный пункт по центру "окна"
+            start = max(0, self.selected - max_items // 2)
+            start = min(start, total - max_items)
+        end = min(total, start + max_items)
 
-            # Фон для выбранного пункта
+        y = 70
+        step = 35  # вертикальный шаг между пунктами
+
+        for idx in range(start, end):
+            name, _ = self.items[idx]
+            is_selected = idx == self.selected
+
             if is_selected:
                 d.rectangle(
-                    (15, y - 5, self.ui.W - 15, y + 40),
+                    (10, y - 4, self.ui.W - 10, y + 28),
                     fill=(10, 40, 60),
                     outline=(0, 255, 180),
                 )
 
             prefix = ">" if is_selected else " "
             color = (255, 255, 255) if is_selected else (180, 180, 180)
-            d.text((30, y), f"{prefix} {name}", font=self.ui.font_big, fill=color)
-            y += 50
+            d.text((22, y), f"{prefix} {name}", font=self.ui.font_big, fill=color)
+            y += step
 
         # ---------- Нижняя панель статуса ----------
         footer_y = self.ui.H - 20
