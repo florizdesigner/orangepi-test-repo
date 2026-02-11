@@ -6,12 +6,17 @@ class ScanScreen(BaseScreen):
         super().__init__(ui, manager)
         self.uid = "---"
 
-        ui.bus.subscribe("btn.RST", self.back)
+        # Подписку на кнопки переносим в on_enter/on_exit,
+        # чтобы можно было безопасно отписываться
 
     def on_enter(self):
+        # Сбрасываем UID при каждом входе на экран
+        self.uid = "---"
+        self.ui.bus.subscribe("btn.RST", self.back)
         self.ui.tasks.toggle("rfid")
 
     def on_exit(self):
+        self.ui.bus.unsubscribe("btn.RST", self.back)
         self.ui.tasks.toggle("rfid")
 
     def on_event(self, evt, data):

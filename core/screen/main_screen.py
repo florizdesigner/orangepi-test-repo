@@ -9,9 +9,16 @@ class MainScreen(BaseScreen):
             ("Write", "write"),
         ]
         self.selected = 0
+        # Подписку на кнопки переносим в on_enter/on_exit,
+        # чтобы можно было безопасно отписываться
 
-        ui.bus.subscribe("btn.DOWN", self.next)
-        ui.bus.subscribe("btn.MID", self.select)
+    def on_enter(self):
+        self.ui.bus.subscribe("btn.DOWN", self.next)
+        self.ui.bus.subscribe("btn.MID", self.select)
+
+    def on_exit(self):
+        self.ui.bus.unsubscribe("btn.DOWN", self.next)
+        self.ui.bus.unsubscribe("btn.MID", self.select)
 
     def next(self):
         self.selected = (self.selected + 1) % len(self.items)
