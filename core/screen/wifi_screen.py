@@ -129,7 +129,7 @@ class WifiScreen(BaseScreen):
         d.text((20, 20), "WiFi", font=self.ui.font_big, fill=(0, 255, 255))
 
         y = 70
-        max_items = 5  # сколько сетей показывать одновременно
+        max_items = 2  # сколько сетей показывать одновременно
 
         if self.networks:
             start = max(0, self.selected - max_items // 2)
@@ -175,7 +175,7 @@ class WifiScreen(BaseScreen):
         status_text = self.status or ""
         if status_text:
             d.text(
-                (20, self.ui.H - 40),
+                (20, self.ui.H - 20),
                 status_text,
                 font=self.ui.font_small,
                 fill=(150, 150, 150),
