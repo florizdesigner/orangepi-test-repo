@@ -11,12 +11,12 @@ class MainScreen(BaseScreen):
         self.items = [
             ("Scan", "scan"),
             ("Wifi", "wifi"),
+            ("Info", "info"),
             ("Write", "write"),
         ]
         self.selected = 0
-        # Информация о системе / статусе
+        # Информация о статусе (Wi‑Fi + время)
         self.wifi_status = "WiFi: ---"
-        self.cpu_temp = "--°C"
         self.time_str = "--:--"
         self._sysinfo_last_update = 0.0
         # Подписку на кнопки переносим в on_enter/on_exit,
@@ -103,22 +103,11 @@ class MainScreen(BaseScreen):
 
         self.ui.disp.display(self.ui.image)
 
-    # ---------- Системная информация ----------
+    # ---------- Системная информация для главного экрана ----------
 
     def _update_sysinfo(self):
         # Время
         self.time_str = datetime.now().strftime("%H:%M")
-
-        # Температура CPU (типичный путь для Raspberry Pi / OrangePi;
-        # если недоступно, оставляем прошлое значение)
-        try:
-            with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
-                raw = f.read().strip()
-            millis = int(raw)
-            self.cpu_temp = f"{millis / 1000.0:.1f}°C"
-        except Exception:
-            # Не трогаем self.cpu_temp, если не получилось прочитать
-            pass
 
         # Статус Wi‑Fi (через nmcli, если доступен)
         try:
