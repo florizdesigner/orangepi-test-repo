@@ -13,6 +13,9 @@ class MainScreen(BaseScreen):
             ("Wifi", "wifi"),
             ("Info", "info"),
             ("Write", "write"),
+            ("MenuItem1", "write"),
+            ("MenuItem2", "write"),
+            ("MenuItem3", "write"),
         ]
         self.selected = 0
         # Информация о статусе (Wi‑Fi + время)
@@ -108,7 +111,7 @@ class MainScreen(BaseScreen):
         d.text(
             (120, footer_y),
             self.wifi_status,
-            font=self.ui.font_small,
+            font=self.ui.font_mid,
             fill=(0, 200, 255),
         )
 
