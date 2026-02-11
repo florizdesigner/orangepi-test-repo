@@ -65,7 +65,7 @@ class MainScreen(BaseScreen):
         )
 
         # ---------- Меню (адаптация под 240x240) ----------
-        max_items = 3  # одновременно показываем не больше трёх пунктов
+        max_items = 4  # одновременно показываем не больше трёх пунктов
         total = len(self.items)
         start = 0
         if total > max_items:
