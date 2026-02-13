@@ -5,7 +5,7 @@ Tool for testing the Velow Cycling Club API
 """
 import logging
 import sys
-from api_client import VelowAPIClient
+from core.api_client import VelowAPIClient
 import config
 
 logging.basicConfig(

@@ -11,9 +11,10 @@ from core.screen.info_screen import InfoScreen
 from manager.screen_manager import ScreenManager
 
 class DisplayManager:
-    def __init__(self, bus, tasks):
+    def __init__(self, bus, tasks, api_client=None):
         self.bus = bus
         self.tasks = tasks
+        self.api_client = api_client
 
         # ------------------ INIT дисплея ------------------
         self.disp = ST7789.ST7789(

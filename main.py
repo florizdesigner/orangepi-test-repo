@@ -7,6 +7,7 @@ import threading
 import time
 from core.event_bus import EventBus
 from core.task import TaskManager
+from core.api_client import VelowAPIClient
 from manager.button_manager import ButtonManager
 from manager.display_manager import DisplayManager
 from manager.nfc_manager import NFCManager
@@ -26,6 +27,20 @@ reader = NFCManager(uart_port="/dev/serial0", baudrate=115200, hmac_secret=confi
 reader.initialize()
 bus = EventBus()
 tasks = TaskManager()
+
+# Инициализация API клиента
+# Добавляем протокол по умолчанию, если его нет
+api_base_url = config.API_BASE_URL
+if not api_base_url.startswith(('http://', 'https://')):
+    api_base_url = f"http://{api_base_url}"
+
+api_client = VelowAPIClient(
+    api_base_url,
+    username=config.API_USERNAME,
+    password=config.API_PASSWORD,
+    bearer_token=config.API_TOKEN
+)
+
 buttons = ButtonManager(config.BUTTON_PINS, bus)
 
 def rfid_loop(stop_event, queue):
@@ -56,7 +71,7 @@ def rfid_write_loop(stop_event):
     reader.stop_writing()
     print("🛑 RFID writing loop stopped")
 
-ui = DisplayManager(bus, tasks)
+ui = DisplayManager(bus, tasks, api_client)
 tasks.register("rfid", lambda e: rfid_loop(e, ui.queue))
 tasks.register("rfid_write", rfid_write_loop)
 
@@ -71,4 +86,5 @@ try:
 except KeyboardInterrupt:
     print("Exiting...")
     buttons.stop()
+    api_client.close()
     GPIO.cleanup()

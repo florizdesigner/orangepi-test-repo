@@ -24,9 +24,9 @@ class NFCHMAC:
 if __name__ == "__main__":
     secret = b"SUPER_SECRET_KEY_32_BYTES"
     signer = NFCHMAC(secret)
-    data = "1234"
+    data = "966243980"
 
-    ts = int(1234567890)
+    ts = int(1770889117)
     payload_dict = {"uid": data, "ts": ts}
     data_str = json.dumps(payload_dict, separators=(",", ":"))
     payload_dict["hmac"] = signer.generate(data_str)
