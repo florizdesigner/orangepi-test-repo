@@ -258,7 +258,7 @@ class VelowAPIClient:
             logger.error(f"Request failed: {e}", exc_info=True)
             return []
     
-    def finish_event(self, event_id: int, user_id: str) -> bool:
+    def finish_event(self, event_id: str, user_id: str) -> bool:
         """
         Finish event registration for a user
         
@@ -269,11 +269,12 @@ class VelowAPIClient:
         Returns:
             True if successful, False otherwise
         """
-        url = f"{self.base_url}/api/events/finish/{event_id}"
+        url = f"{self.base_url}/api/registration/finish"
         
         # Prepare request body
         payload = {
-            "userId": user_id
+            "userId": user_id,
+            "eventId": event_id
         }
         
         try:
