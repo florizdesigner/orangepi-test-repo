@@ -77,8 +77,7 @@ class ScanScreen(BaseScreen):
             return
         
         try:
-            # Преобразуем event_id в int, если нужно
-            event_id = int(self.current_event_id)
+            event_id = self.current_event_id
             success = self.ui.api_client.finish_event(event_id, user_id)
             
             if success:
