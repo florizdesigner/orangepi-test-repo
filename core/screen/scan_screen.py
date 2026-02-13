@@ -55,7 +55,7 @@ class ScanScreen(BaseScreen):
                 # Предполагаем, что API возвращает события отсортированными
                 active_event = events[0]
                 self.current_event_id = active_event.get('id')
-                self.event_name = active_event.get('name', 'Unknown')
+                self.event_name = active_event.get('title', 'Unknown')
                 logger.info(f"Active event loaded: {self.event_name} (ID: {self.current_event_id})")
             else:
                 self.current_event_id = None
