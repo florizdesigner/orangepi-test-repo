@@ -23,6 +23,7 @@ Usage:
 """
 import requests
 import logging
+import json
 from typing import Optional, List, Dict, Any
 
 
@@ -61,6 +62,83 @@ class VelowAPIClient:
         elif bearer_token:
             self._set_bearer_token(bearer_token)
     
+    def _log_request(self, method: str, url: str, params: Optional[Dict] = None, 
+                     json_data: Optional[Dict] = None, headers: Optional[Dict] = None):
+        """Логирование HTTP запроса"""
+        try:
+            logger.info("=" * 80)
+            logger.info(f"HTTP REQUEST: {method} {url}")
+            
+            if params:
+                logger.info(f"Query params: {params}")
+            
+            # Логируем заголовки (безопасно - скрываем токены)
+            log_headers = {}
+            try:
+                if headers:
+                    for key, value in headers.items():
+                        if key.lower() == 'authorization':
+                            log_headers[key] = f"Bearer ***{value[-10:]}" if len(value) > 10 else "Bearer ***"
+                        else:
+                            log_headers[key] = value
+                else:
+                    # Берем заголовки из сессии
+                    for key, value in self.session.headers.items():
+                        if key.lower() == 'authorization':
+                            log_headers[key] = f"Bearer ***{value[-10:]}" if len(value) > 10 else "Bearer ***"
+                        else:
+                            log_headers[key] = value
+                
+                if log_headers:
+                    logger.info(f"Headers: {json.dumps(log_headers, indent=2, ensure_ascii=False)}")
+            except Exception as e:
+                logger.warning(f"Failed to log headers: {e}")
+            
+            if json_data:
+                try:
+                    logger.info(f"Request body: {json.dumps(json_data, indent=2, ensure_ascii=False)}")
+                except Exception as e:
+                    logger.warning(f"Failed to log request body: {e}")
+                    logger.info(f"Request body: {str(json_data)}")
+            
+            logger.info("-" * 80)
+        except Exception as e:
+            logger.warning(f"Failed to log request: {e}")
+    
+    def _log_response(self, response: requests.Response):
+        """Логирование HTTP ответа"""
+        try:
+            logger.info(f"HTTP RESPONSE: {response.status_code} {response.reason}")
+            logger.info(f"Response URL: {response.url}")
+            
+            # Логируем заголовки ответа
+            try:
+                if response.headers:
+                    logger.info(f"Response headers: {dict(response.headers)}")
+            except Exception as e:
+                logger.warning(f"Failed to log response headers: {e}")
+            
+            # Пытаемся распарсить JSON ответ
+            try:
+                response_json = response.json()
+                logger.info(f"Response body (JSON):\n{json.dumps(response_json, indent=2, ensure_ascii=False)}")
+            except (ValueError, json.JSONDecodeError):
+                # Если не JSON, логируем как текст
+                try:
+                    response_text = response.text
+                    if len(response_text) > 500:
+                        logger.info(f"Response body (text, truncated):\n{response_text[:500]}...")
+                    else:
+                        logger.info(f"Response body (text):\n{response_text}")
+                except Exception as e:
+                    logger.warning(f"Failed to log response body: {e}")
+            except Exception as e:
+                logger.warning(f"Failed to parse response: {e}")
+            
+            logger.info("=" * 80)
+        except Exception as e:
+            logger.warning(f"Failed to log response: {e}")
+    
     def _set_bearer_token(self, token: str):
         """Set bearer token in session headers"""
         self.bearer_token = token
@@ -89,8 +167,9 @@ class VelowAPIClient:
         }
         
         try:
-            logger.debug(f"POST {url}")
+            self._log_request("POST", url, json_data=payload)
             response = self.session.post(url, json=payload, timeout=10)
+            self._log_response(response)
             
             if response.status_code == 200:
                 auth_data = response.json()
@@ -111,7 +190,7 @@ class VelowAPIClient:
                 return False
                 
         except requests.exceptions.RequestException as e:
-            logger.error(f"Authentication request failed: {e}")
+            logger.error(f"Authentication request failed: {e}", exc_info=True)
             return False
     
     def get_user(self, user_id: str) -> Optional[Dict[str, Any]]:
@@ -127,8 +206,9 @@ class VelowAPIClient:
         url = f"{self.base_url}/api/users/{user_id}"
         
         try:
-            logger.debug(f"GET {url}")
+            self._log_request("GET", url)
             response = self.session.get(url, timeout=10)
+            self._log_response(response)
             
             if response.status_code == 200:
                 user_data = response.json()
@@ -142,7 +222,7 @@ class VelowAPIClient:
                 return None
                 
         except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed: {e}")
+            logger.error(f"Request failed: {e}", exc_info=True)
             return None
     
     def get_events(self, status: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -162,8 +242,9 @@ class VelowAPIClient:
             params['status'] = status
         
         try:
-            logger.debug(f"GET {url} with params: {params}")
+            self._log_request("GET", url, params=params)
             response = self.session.get(url, params=params, timeout=10)
+            self._log_response(response)
             
             if response.status_code == 200:
                 events = response.json()
@@ -174,7 +255,7 @@ class VelowAPIClient:
                 return []
                 
         except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed: {e}")
+            logger.error(f"Request failed: {e}", exc_info=True)
             return []
     
     def finish_event(self, event_id: int, user_id: str) -> bool:
@@ -196,8 +277,9 @@ class VelowAPIClient:
         }
         
         try:
-            logger.debug(f"POST {url} with payload: {payload}")
+            self._log_request("POST", url, json_data=payload)
             response = self.session.post(url, json=payload, timeout=10)
+            self._log_response(response)
             
             if response.status_code in [200, 201, 204]:
                 logger.info(f"Event finished successfully: event_id={event_id}, user_id={user_id}")
@@ -207,7 +289,7 @@ class VelowAPIClient:
                 return False
                 
         except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed: {e}")
+            logger.error(f"Request failed: {e}", exc_info=True)
             return False
     
     def close(self):
