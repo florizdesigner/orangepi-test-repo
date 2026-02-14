@@ -224,7 +224,32 @@ class VelowAPIClient:
         except requests.exceptions.RequestException as e:
             logger.error(f"Request failed: {e}", exc_info=True)
             return None
-    
+
+    def get_active_events(self):
+        """
+        Get list of active events
+
+        Returns:
+            List of event objects
+        """
+        url = f"{self.base_url}/api/events/active"
+        try:
+            self._log_request("GET", url)
+            response = self.session.get(url, timeout=10)
+            self._log_response(response)
+
+            if response.status_code == 200:
+                events = response.json()
+                logger.info(f"Retrieved {len(events)} events")
+                return events
+            else:
+                logger.error(f"Failed to get events: {response.status_code} - {response.text}")
+                return []
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request failed: {e}", exc_info=True)
+            return []
+
     def get_events(self, status: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get list of events
