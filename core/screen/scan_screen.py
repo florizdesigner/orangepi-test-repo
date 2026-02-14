@@ -49,9 +49,9 @@ class ScanScreen(BaseScreen):
         self.user_name = username
 
     def _format_user_info(self, result):
-        first_name = result['first_name'] | None
-        last_name = result['last_name'] | None
-        username = result['username'] | None
+        first_name = result['first_name']
+        last_name = result['last_name']
+        username = result['username']
 
         # Собираем имя и фамилию
         name_parts = [part for part in [first_name, last_name] if part]
