@@ -44,7 +44,7 @@ class ScanScreen(BaseScreen):
         self.manager.set("main")
 
     def _get_user_info(self, user_id: str):
-        result = selt.ui.api_client.get_user(user_id)
+        result = self.ui.api_client.get_user(user_id)
         username = _format_user_info(result)
         self.user_name = username
 
