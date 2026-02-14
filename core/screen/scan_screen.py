@@ -45,10 +45,10 @@ class ScanScreen(BaseScreen):
 
     def _get_user_info(self, user_id: str):
         result = self.ui.api_client.get_user(user_id)
-        username = _format_user_info(result)
+        username = self._format_user_info(result)
         self.user_name = username
 
-    def _format_user_info(result):
+    def _format_user_info(self, result):
         first_name = result['first_name'] | None
         last_name = result['last_name'] | None
         username = result['username'] | None
