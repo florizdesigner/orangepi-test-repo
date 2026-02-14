@@ -48,7 +48,8 @@ class ScanScreen(BaseScreen):
         username = self._format_user_info(result)
         self.user_name = username
 
-    def _format_user_info(self, result):
+    @staticmethod
+    def _format_user_info(result):
         first_name = result['first_name']
         last_name = result['last_name']
         username = result['username']
