@@ -98,6 +98,7 @@ class ScanScreen(BaseScreen):
     def _finish_event(self, user_id: str):
         """Отправляет запрос /finish с userId и eventId"""
         if not self.current_event_id:
+            self.show_popup(f"Cannot finish event: no active event", "warn", duration=3)
             logger.warning(f"Cannot finish event: no active event. User ID: {user_id}")
             return
         
