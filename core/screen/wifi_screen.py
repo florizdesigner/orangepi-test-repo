@@ -62,6 +62,7 @@ class WifiScreen(BaseScreen):
             self.status = f"Подключение к {ssid}..."
             subprocess.check_call(["nmcli", "dev", "wifi", "connect", ssid])
             self.status = f"Подключено к {ssid}"
+            self.show_popup(f"Connected to {ssid}", "success", duration=3)
         except Exception as e:
             # Детали ошибки в логах, пользователю краткое сообщение.
             self.status = f"Ошибка подключения к \n{ssid}"
