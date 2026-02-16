@@ -121,7 +121,7 @@ class WifiScreen(BaseScreen):
 
     # ---------- Рендер ----------
 
-    def draw(self):
+    def _draw_content(self):
         d = self.ui.draw
         d.rectangle((0, 0, self.ui.W, self.ui.H), fill=(0, 0, 0))
 
@@ -180,6 +180,4 @@ class WifiScreen(BaseScreen):
                 font=self.ui.font_small,
                 fill=(150, 150, 150),
             )
-
-        self.ui.disp.display(self.ui.image)
 

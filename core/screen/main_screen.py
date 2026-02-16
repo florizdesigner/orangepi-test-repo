@@ -45,7 +45,7 @@ class MainScreen(BaseScreen):
         screen_name = self.items[self.selected][1]
         self.manager.set(screen_name)
 
-    def draw(self):
+    def _draw_content(self):
         d = self.ui.draw
         d.rectangle((0, 0, self.ui.W, self.ui.H), fill=(0, 0, 0))
 
@@ -114,8 +114,6 @@ class MainScreen(BaseScreen):
             font=self.ui.font_small,
             fill=(0, 200, 255),
         )
-
-        self.ui.disp.display(self.ui.image)
 
     # ---------- Системная информация для главного экрана ----------
 

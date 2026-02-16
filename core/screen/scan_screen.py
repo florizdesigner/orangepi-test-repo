@@ -111,6 +111,7 @@ class ScanScreen(BaseScreen):
             
             if success:
                 logger.info(f"Event finished successfully: event_id={event_id}, user_id={user_id}")
+                self.show_popup("Event finished successfully", "success", duration=3)
             else:
                 logger.error(f"Failed to finish event: event_id={event_id}, user_id={user_id}")
         except Exception as e:
@@ -136,7 +137,7 @@ class ScanScreen(BaseScreen):
     #
     #     self.ui.disp.display(self.ui.image)
 
-    def draw(self):
+    def _draw_content(self):
         d = self.ui.draw
         d.rectangle((0, 0, self.ui.W, self.ui.H), fill=(0, 0, 20))
 
@@ -167,5 +168,3 @@ class ScanScreen(BaseScreen):
         d.text((16, 145), "Status: OK", font=self.ui.font_small, fill=(0, 255, 100))
 
         d.text((16, 215), "RST = Back", font=self.ui.font_small, fill=(150, 150, 150))
-
-        self.ui.disp.display(self.ui.image)
